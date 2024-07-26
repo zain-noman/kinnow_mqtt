@@ -74,7 +74,12 @@ ParseResult<int>? parseVarLengthInt(Iterable<int> data) {
   int multiplier = 1;
   int value = 0;
   int i = 0;
-  while (true) {}
-  value += data.elementAt(i) * multiplier;
-  return ParseResult(data: value, nextBlockStart: data.skip(i));
+  while (true) {
+    if (i>=4 || i>=data.length) return null;
+    value += (data.elementAt(i) & 0x7F) * multiplier;
+    if (data.elementAt(i) < 127) break;
+    multiplier *= 128;
+    i++;
+  }
+  return ParseResult(data: value, nextBlockStart: data.skip(i+1));
 }
