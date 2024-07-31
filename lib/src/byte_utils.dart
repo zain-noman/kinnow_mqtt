@@ -29,10 +29,12 @@ class ByteUtils {
   }
 
   static List<int> makeUtf8StringBytes(String val) {
+    ///TODO: Fix 0xFEEF problem
+    final encoded = utf8.encode(val);
     return [
-      (val.length >> 8 & 0xFF),
-      (val.length & 0xFF),
-      ...utf8.encode(val),
+      (encoded.length >> 8 & 0xFF),
+      (encoded.length & 0xFF),
+      ...encoded,
     ];
   }
 
