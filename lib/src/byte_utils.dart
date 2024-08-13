@@ -4,10 +4,15 @@ import 'dart:typed_data';
 import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 
 class ParseResult<T> {
-  T data;
-  Iterable<int> nextBlockStart;
+  final T data;
+  final Iterable<int> nextBlockStart;
+  final int bytesConsumed;
 
-  ParseResult({required this.data, required this.nextBlockStart});
+  ParseResult({
+    required this.data,
+    required this.bytesConsumed,
+    required this.nextBlockStart,
+  });
 }
 
 class StringOrBytes {
@@ -97,8 +102,9 @@ class ByteUtils {
   }
 
   static ParseResult<String>? mqttParseUtf8(Iterable<int> data) {
-    assert(data.length > 2);
+    if(data.length < 2) return null;
     int strlen = data.elementAt(0) * 255 + data.elementAt(1);
+    if (data.length < 2+strlen) return null;
 
     // implementation based on implementation by Bjoern Hoehrmann slightly
     // modified for the mqtt spec. Dart's own utf8 decode is based on this
@@ -158,6 +164,7 @@ class ByteUtils {
     }
     return ParseResult(
         data: String.fromCharCodes(codePoints),
+        bytesConsumed: 2 + strlen,
         nextBlockStart: data.skip(2 + strlen));
   }
 
@@ -172,6 +179,54 @@ class ByteUtils {
       multiplier *= 128;
       i++;
     }
-    return ParseResult(data: value, nextBlockStart: data.skip(i + 1));
+    return ParseResult(
+        data: value, nextBlockStart: data.skip(i + 1), bytesConsumed: i+1);
+  }
+
+  static ParseResult<int>? parseFourByte(Iterable<int> block) {
+    if (block.length < 4) return null;
+    final data = Uint8List.fromList(block.take(4).toList());
+    final blob = ByteData.sublistView(data);
+
+    return ParseResult(
+        data: blob.getUint32(0, Endian.big),
+        nextBlockStart: block.skip(4),
+        bytesConsumed: 4);
+  }
+
+  static ParseResult<int>? parseTwoByte(Iterable<int> block) {
+    if (block.length < 2) return null;
+    final data = Uint8List.fromList(block.take(2).toList());
+    final blob = ByteData.sublistView(data);
+
+    return ParseResult(
+        data: blob.getUint16(0, Endian.big),
+        nextBlockStart: block.skip(2),
+        bytesConsumed: 2);
+  }
+
+  static ParseResult<MapEntry<String, String>>? parseStringPair(
+      Iterable<int> block) {
+    final keyRes = ByteUtils.mqttParseUtf8(block);
+    //malformed strings
+    if (keyRes == null) return null;
+    final valueRes = ByteUtils.mqttParseUtf8(keyRes.nextBlockStart);
+    if (valueRes == null) return null;
+    return ParseResult(
+      data: MapEntry(keyRes.data, valueRes.data),
+      nextBlockStart: valueRes.nextBlockStart,
+      bytesConsumed: keyRes.bytesConsumed + valueRes.bytesConsumed,
+    );
+  }
+
+  static ParseResult<List<int>>? parseBinaryData(Iterable<int> block) {
+    if (block.length < 2) return null;
+    final dataLen = block.elementAt(0) * 255 + block.elementAt(1);
+    if (block.length < 2 + dataLen) return null;
+    return ParseResult(
+      data: block.skip(2).take(dataLen).toList(),
+      nextBlockStart: block.skip(2 + dataLen),
+      bytesConsumed: 2 + dataLen,
+    );
   }
 }
