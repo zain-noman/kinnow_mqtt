@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
-
 class ParseResult<T> {
   final T data;
   final Iterable<int> nextBlockStart;
@@ -16,23 +14,31 @@ class ParseResult<T> {
 }
 
 class StringOrBytes {
-  late final List<int> bytes;
+  List<int>? _bytes;
+  String? _string;
 
-  StringOrBytes.s(String val) {
-    bytes = utf8.encode(val);
+  StringOrBytes.fromString(String str) {
+    _string = str;
   }
 
-  StringOrBytes.b(this.bytes);
+  StringOrBytes.fromBytes(bytes) {
+    _bytes = bytes;
+  }
+
+  List<int> get asBytes {
+    if (_bytes != null) return _bytes!;
+    _bytes = utf8.encode(_string!);
+    return _bytes!;
+  }
+
+  String get asString {
+    if (_string != null) return _string!;
+    _string = utf8.decode(_bytes!);
+    return _string!;
+  }
 }
 
 class ByteUtils {
-  static List<int> makeFixedHeader(
-      MqttPacketType type, int flags, int bodyLen) {
-    assert(bodyLen < 256);
-    assert(flags < 0x0F);
-    return [(type.index << 4) | (flags & 0x0F), bodyLen & 0xFF];
-  }
-
   static List<int> makeUtf8StringBytes(String val) {
     ///TODO: Fix 0xFEEF problem
     final encoded = utf8.encode(val);
@@ -102,9 +108,9 @@ class ByteUtils {
   }
 
   static ParseResult<String>? mqttParseUtf8(Iterable<int> data) {
-    if(data.length < 2) return null;
+    if (data.length < 2) return null;
     int strlen = data.elementAt(0) * 255 + data.elementAt(1);
-    if (data.length < 2+strlen) return null;
+    if (data.length < 2 + strlen) return null;
 
     // implementation based on implementation by Bjoern Hoehrmann slightly
     // modified for the mqtt spec. Dart's own utf8 decode is based on this
@@ -180,7 +186,7 @@ class ByteUtils {
       i++;
     }
     return ParseResult(
-        data: value, nextBlockStart: data.skip(i + 1), bytesConsumed: i+1);
+        data: value, nextBlockStart: data.skip(i + 1), bytesConsumed: i + 1);
   }
 
   static ParseResult<int>? parseFourByte(Iterable<int> block) {

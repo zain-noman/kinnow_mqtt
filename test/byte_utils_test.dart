@@ -1,18 +1,10 @@
 import 'package:cutie_mqtt/src/byte_utils.dart';
-import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 import 'package:test/test.dart';
 
 void main() {
   group(
     "Byte Utils Tests",
         () {
-      test(
-        "fixed header",
-            () {
-          expect(ByteUtils.makeFixedHeader(MqttPacketType.connect, 0x0A, 2),
-              [0x1A, 2]);
-        },
-      );
       test(
         "makeUtf8StringBytes",
             () {

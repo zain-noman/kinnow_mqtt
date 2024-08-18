@@ -86,7 +86,7 @@ void main() {
           lastWill: null,
           keepAliveSeconds: 60,
           username: "username",
-          password: StringOrBytes.s("password"));
+          password: StringOrBytes.fromString("password"));
 
       expect(packet.toBytes("clientId"), expectedBytes);
     });

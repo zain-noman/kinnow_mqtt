@@ -1,4 +1,5 @@
 import 'package:cutie_mqtt/src/byte_utils.dart';
+import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
 import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 import 'package:cutie_mqtt/src/mqtt_qos.dart';
 
@@ -120,8 +121,7 @@ class ConnectPacket {
       (((cleanStart ? 1 : 0) << 1) |
           ((lastWill == null ? 0 : 1) << 2) |
           ((lastWill == null ? 0 : lastWill!.qos.index) << 3) |
-          ((lastWill == null ? 0 : (lastWill!.retain ? 1 : 0)) <<
-              5) |
+          ((lastWill == null ? 0 : (lastWill!.retain ? 1 : 0)) << 5) |
           ((password == null ? 0 : 1) << 6) |
           ((username == null ? 0 : 1) << 7)),
       keepAliveSeconds >> 8, keepAliveSeconds & 0xFF,
@@ -135,13 +135,13 @@ class ConnectPacket {
       if (lastWill != null)
         ...ByteUtils.makeUtf8StringBytes(lastWill!.willTopic),
       if (lastWill != null)
-        ...ByteUtils.prependBinaryDataLength(lastWill!.willPayload.bytes),
+        ...ByteUtils.prependBinaryDataLength(lastWill!.willPayload.asBytes),
       if (username != null) ...ByteUtils.makeUtf8StringBytes(username!),
       if (password != null)
-        ...ByteUtils.prependBinaryDataLength(password!.bytes),
+        ...ByteUtils.prependBinaryDataLength(password!.asBytes),
     ];
     final retVal =
-        ByteUtils.makeFixedHeader(MqttPacketType.connect, 0, body.length);
+        MqttFixedHeader(MqttPacketType.connect, 0, body.length).toBytes();
     retVal.addAll(body);
     return retVal;
   }
