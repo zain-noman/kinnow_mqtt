@@ -8,6 +8,7 @@ class MqttFixedHeader {
 
   static ParseResult<MqttFixedHeader>? fromBytes(Iterable<int> bytes) {
     if (bytes.length<2) return null;
+    if (bytes.elementAt(0) >> 4 > MqttPacketType.values.length) return null;
     final MqttFixedHeader data = MqttFixedHeader(
       MqttPacketType.values[bytes.elementAt(0) >> 4],
       bytes.elementAt(0) & 0x0F,
