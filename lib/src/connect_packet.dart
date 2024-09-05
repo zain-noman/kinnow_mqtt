@@ -53,7 +53,7 @@ class ConnectPacketWillProperties {
 
 class ConnectPacket {
   final int protocolVersion;
-  final bool cleanStart;
+  bool cleanStart;
   final ConnectPacketWillProperties? lastWill;
   final int keepAliveSeconds;
 

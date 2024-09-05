@@ -4,7 +4,7 @@ import 'dart:io';
 abstract class MqttNetworkConnection {
   Future<Stream<int>?> connect();
 
-  void transmit(Iterable<int> bytes);
+  Future<bool> transmit(Iterable<int> bytes);
 }
 
 class TcpMqttNetworkConnection implements MqttNetworkConnection {
@@ -24,6 +24,10 @@ class TcpMqttNetworkConnection implements MqttNetworkConnection {
             sink.add(d);
           }
         },
+        handleDone: (sink) {
+          sink.close();
+          currentSocket = null;
+        },
       ));
     } catch (e) {
       return null;
@@ -31,8 +35,10 @@ class TcpMqttNetworkConnection implements MqttNetworkConnection {
   }
 
   @override
-  void transmit(Iterable<int> bytes) {
-    currentSocket!.add(bytes.toList());
+  Future<bool> transmit(Iterable<int> bytes) async {
+    if (currentSocket == null) return false;
+    currentSocket?.add(bytes.toList());
+    return true;
   }
 
   TcpMqttNetworkConnection(this.host, this.port);
