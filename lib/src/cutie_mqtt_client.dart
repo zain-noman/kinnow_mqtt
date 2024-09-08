@@ -2,19 +2,16 @@ import 'dart:async';
 import 'package:async/async.dart';
 import 'package:cutie_mqtt/cutie_mqtt.dart';
 import 'package:cutie_mqtt/src/conn_ack_packet.dart';
-import 'package:cutie_mqtt/src/connect_packet.dart';
 import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
 import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 import 'package:cutie_mqtt/src/mqtt_qos.dart';
 import 'package:cutie_mqtt/src/publish_packet.dart';
 import 'package:cutie_mqtt/src/resettable_periodic_timer.dart';
 
-import 'mqtt_events.dart';
-import 'mqtt_network_connections.dart';
-
 class MqttActiveConnectionState {
   final ResettablePeriodicTimer pingTimer;
   final StreamQueue<int> streamQ;
+  final Completer<Null> pingRespTimeoutCompleter = Completer<Null>();
 
   MqttActiveConnectionState(this.pingTimer, this.streamQ);
 
@@ -27,10 +24,11 @@ class CutieMqttClient implements TopicAliasManager {
   final MqttNetworkConnection networkConnection;
   late String clientId;
   final StreamController<MqttEvent> _eventController =
-  StreamController<MqttEvent>();
+      StreamController<MqttEvent>.broadcast();
 
-  final StreamController<bool> _connectionStatusController = StreamController<
-      bool>.broadcast();
+  final StreamController<bool> _connectionStatusController =
+      StreamController<bool>.broadcast();
+
   Stream<bool> get connectionStatusStream => _connectionStatusController.stream;
 
   MqttActiveConnectionState? _activeConnectionState;
@@ -39,13 +37,11 @@ class CutieMqttClient implements TopicAliasManager {
 
   bool _disconnectFlag = false;
   final StreamController<bool> _disconnectFlagStream =
-  StreamController<bool>.broadcast();
+      StreamController<bool>.broadcast();
 
   CutieMqttClient(this.networkConnection, {String? initClientId}) {
     clientId =
-        initClientId ?? "cutie_mqtt_${DateTime
-            .now()
-            .millisecondsSinceEpoch}";
+        initClientId ?? "cutie_mqtt_${DateTime.now().millisecondsSinceEpoch}";
   }
 
   Stream<MqttEvent> begin(ConnectPacket connPkt) {
@@ -58,19 +54,28 @@ class CutieMqttClient implements TopicAliasManager {
       ConnectPacket connPkt) async {
     final byteStream = await networkConnection.connect();
     if (byteStream == null) {
-      _eventController.add(SocketConnectionFailure());
+      _eventController.add(NetworkConnectionFailure());
       return (false, null);
     }
+    print("network Connected");
     // byteStream.listen((event) => print("socket data: $event"),
     //     onDone: () => print("stream finished"));
     networkConnection.transmit(connPkt.toBytes(clientId));
+    print("connect sent");
 
     final streamQ = StreamQueue<int>(byteStream);
-    final connackFixedHdr = await streamQ.take(2);
+    final connackFixedHdr = await Future.any(
+      [Future.delayed(const Duration(seconds: 3), () => null), streamQ.take(2)],
+    );
+    print("$connackFixedHdr");
+    if (connackFixedHdr == null){
+      _eventController.add(ConnackTimedOut());
+      return (false, null);
+    }
 
     // handle case where the stream ends before 2 bytes
     if (connackFixedHdr.length != 2) {
-      _eventController.add(SocketEnded());
+      _eventController.add(NetworkEnded());
       return (false, null);
     }
 
@@ -82,9 +87,16 @@ class CutieMqttClient implements TopicAliasManager {
     }
     final remLen = fixedHdr.data.remainingLength;
 
-    final connackBytes = await streamQ.take(remLen);
+    final connackBytes = await Future.any([
+      streamQ.take(remLen),
+      Future.delayed(const Duration(seconds: 3), () => null)
+    ]);
+    if (connackBytes == null) {
+      _eventController.add(ConnackTimedOut());
+      return (false, null);
+    }
     if (connackBytes.length != remLen) {
-      _eventController.add(SocketEnded());
+      _eventController.add(NetworkEnded());
       return (false, null);
     }
 
@@ -128,6 +140,7 @@ class CutieMqttClient implements TopicAliasManager {
         ),
         streamQ,
       );
+      _activeConnectionState!.pingTimer.start();
       _connectionStatusController.add(true);
       final reconnect = await _useActiveNetworkConnection();
       _connectionStatusController.add(false);
@@ -139,28 +152,54 @@ class CutieMqttClient implements TopicAliasManager {
     }
   }
 
+  bool _pingRespReceived = false;
+
   void _sendPingReq() {
     networkConnection
         .transmit(MqttFixedHeader(MqttPacketType.pingreq, 0, 0).toBytes());
+    _pingRespReceived = false;
+    _eventController.add(PingReqSent());
+    Timer(
+      const Duration(seconds: 3),
+      () {
+        if (_pingRespReceived) return;
+        _eventController.add(PingRespNotReceived());
+        _activeConnectionState?.pingRespTimeoutCompleter.complete(null);
+      },
+    );
   }
 
   //returns whether to reconnect or not
   Future<bool> _useActiveNetworkConnection() async {
     assert(_activeConnectionState != null);
     while (true) {
-      final fixedHeaderBytes = await _activeConnectionState!.streamQ.take(2);
+      final fixedHeaderBytes = await Future.any([
+        _activeConnectionState!.streamQ.take(2),
+        _activeConnectionState!.pingRespTimeoutCompleter.future,
+      ]);
+      // ping response not received
+      if (fixedHeaderBytes == null) {
+        return true;
+      }
+
       // connection closed
       if (fixedHeaderBytes.length != 2) {
-        return false;
+        return true;
       }
       final fixedHeaderParse = MqttFixedHeader.fromBytes(fixedHeaderBytes);
       if (fixedHeaderParse == null) {
         return true;
       }
-      final packetBytes = await _activeConnectionState!.streamQ
-          .take(fixedHeaderParse.data.remainingLength);
+      final packetBytes = await Future.any([
+        _activeConnectionState!.streamQ
+            .take(fixedHeaderParse.data.remainingLength),
+        _activeConnectionState!.pingRespTimeoutCompleter.future
+      ]);
+      //ping response timeout
+      if (packetBytes == null) return true;
+
       if (packetBytes.length != fixedHeaderParse.data.remainingLength) {
-        return false;
+        return true;
       }
       switch (fixedHeaderParse.data.packetType) {
         case MqttPacketType.publish:
@@ -178,8 +217,10 @@ class CutieMqttClient implements TopicAliasManager {
         case MqttPacketType.unsuback:
         // TODO: Handle this case.
         case MqttPacketType.pingresp:
-        // TODO: Handle this case.
+          _eventController.add(PingRespReceived());
+          _pingRespReceived = true;
         case MqttPacketType.disconnect:
+          return false;
         // TODO: Handle this case.
         case MqttPacketType.auth:
         // TODO: Handle this case.
@@ -205,8 +246,8 @@ class CutieMqttClient implements TopicAliasManager {
   int createTopicAlias(String topic) {
     int maxAliasNo = _txTopicAliasMap.values.fold(
         1,
-            (previousValue, element) =>
-        (element > previousValue) ? element : previousValue);
+        (previousValue, element) =>
+            (element > previousValue) ? element : previousValue);
     _txTopicAliasMap[topic] = maxAliasNo + 1;
     return maxAliasNo + 1;
   }
