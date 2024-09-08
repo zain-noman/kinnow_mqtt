@@ -233,9 +233,9 @@ class CutieMqttClient implements TopicAliasManager {
   Future<void> publishQos0(TxPublishPacket pubPkt,
       {bool waitForConnection = false}) async {
     final txPkt =
-    InternalTxPublishPacket(null, MqttQos.atMostOnce, pubPkt, this);
+        InternalTxPublishPacket(null, MqttQos.atMostOnce, pubPkt, this);
     if (waitForConnection && _activeConnectionState == null) {
-      await connectionStatusStream.firstWhere((element) => element==true);
+      await connectionStatusStream.firstWhere((element) => element == true);
     }
     await networkConnection.transmit(txPkt.bytes);
   }

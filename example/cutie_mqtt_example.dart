@@ -15,13 +15,9 @@ void main() async {
     (event) {
       print(event.runtimeType);
       switch (event) {
-        case SocketConnectionFailure():
-        // TODO: Handle this case.
-        case SocketEnded():
-        // TODO: Handle this case.
-        case MalformedPacket():
-        // TODO: Handle this case.
         case ConnAckEvent():
+        // TODO: Handle this case.
+        default:
         // TODO: Handle this case.
       }
     },
