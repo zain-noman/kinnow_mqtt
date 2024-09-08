@@ -98,7 +98,9 @@ class ConnAckPacket {
     List<int>? authData;
 
     sessionPresent = bytes.elementAt(0) == 0x01;
-    connectReasonCode = _reasonCodeLookup[bytes.elementAt(1)]!;
+    final reasonCodeTemp = _reasonCodeLookup[bytes.elementAt(1)];
+    if (reasonCodeTemp == null) return null;
+    connectReasonCode = reasonCodeTemp;
     final propertyLenRes = ByteUtils.parseVarLengthInt(bytes.skip(2))!;
     Iterable<int> currentBlock = propertyLenRes.nextBlockStart;
     int bytesDone = 0;

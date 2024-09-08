@@ -6,7 +6,7 @@ void main() {
     "parse sniffed connAckPacket",
     () {
       final packetBytes = [
-        0x00,
+        0x20,
         0x09,
         0x00,
         0x00,
