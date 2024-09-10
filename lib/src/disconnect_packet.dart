@@ -168,12 +168,13 @@ class DisconnectPacket {
     if (serverReference != null) {
       props.addAll([0x1C, ...ByteUtils.makeUtf8StringBytes(serverReference!)]);
     }
-    return [
-      ...MqttFixedHeader(MqttPacketType.disconnect, 0, props.length + 1)
-          .toBytes(),
-      _reasonCodeToByte[reasonCode]!,
+    final body = [_reasonCodeToByte[reasonCode]!,
       ...ByteUtils.makeVariableByteInteger(props.length),
-      ...props
+      ...props];
+    return [
+      ...MqttFixedHeader(MqttPacketType.disconnect, 0, body.length)
+          .toBytes(),
+      ...body
     ];
   }
 }
