@@ -149,7 +149,7 @@ class DisconnectPacket {
   final Map<String, String> userProperties;
   final String? serverReference;
 
-  DisconnectPacket(
+  const DisconnectPacket(
     this.reasonCode, {
     this.sessionExpiryInterval,
     this.reasonString,

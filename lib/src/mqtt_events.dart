@@ -1,4 +1,5 @@
 import 'package:cutie_mqtt/src/conn_ack_packet.dart';
+import 'package:cutie_mqtt/src/disconnect_packet.dart';
 
 sealed class MqttEvent {}
 
@@ -38,3 +39,18 @@ class PingRespReceived extends MqttEvent {
 class PingRespNotReceived extends MqttEvent {}
 
 class ConnackTimedOut extends MqttEvent {}
+
+enum ShutdownType {
+  clientInitiated,
+  clientInitiatedMalformedPacket,
+  serverInitiated,
+  connectionNotPossible,
+  clientInitiatedNetworkUnavailable,
+}
+
+class ShutDown extends MqttEvent {
+  final ShutdownType type;
+  final DisconnectPacket? disconnectPacket;
+
+  ShutDown(this.type, this.disconnectPacket);
+}

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:async/async.dart';
 import 'package:cutie_mqtt/cutie_mqtt.dart';
 import 'package:cutie_mqtt/src/conn_ack_packet.dart';
+import 'package:cutie_mqtt/src/disconnect_packet.dart';
 import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
 import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 import 'package:cutie_mqtt/src/mqtt_qos.dart';
@@ -38,14 +39,22 @@ class CutieMqttClient implements TopicAliasManager {
   bool _disconnectFlag = false;
   final StreamController<bool> _disconnectFlagStream =
       StreamController<bool>.broadcast();
+  DisconnectPacket? _txDisconnectPacket;
 
   CutieMqttClient(this.networkConnection, {String? initClientId}) {
     clientId =
         initClientId ?? "cutie_mqtt_${DateTime.now().millisecondsSinceEpoch}";
+    _disconnectFlagStream.onListen = () {
+      if (_disconnectFlag == true) {
+        _disconnectFlagStream.add(true);
+      }
+    };
   }
 
   Stream<MqttEvent> begin(ConnectPacket connPkt) {
-    _eventController.onListen = () => _internalLoop(connPkt);
+    _eventController.onListen = () {
+      _internalLoop(connPkt);
+    };
     // TODO: onCancel
     return _eventController.stream;
   }
@@ -68,7 +77,7 @@ class CutieMqttClient implements TopicAliasManager {
       [Future.delayed(const Duration(seconds: 3), () => null), streamQ.take(2)],
     );
     print("$connackFixedHdr");
-    if (connackFixedHdr == null){
+    if (connackFixedHdr == null) {
       _eventController.add(ConnackTimedOut());
       return (false, null);
     }
@@ -112,21 +121,26 @@ class CutieMqttClient implements TopicAliasManager {
     return (false, streamQ);
   }
 
-  void _internalLoop(ConnectPacket connPkt) async {
+  Future<void> _internalLoop(ConnectPacket connPkt) async {
     while (true) {
       final (exit, streamQ) = await _connect(connPkt);
 
       if (streamQ == null) {
         if (exit) {
           // connection failed but we shouldn't retry
+          _eventController
+              .add(ShutDown(ShutdownType.connectionNotPossible, null));
           break;
         } else {
-          if (_disconnectFlag) break;
           await Future.any([
             Future.delayed(Duration(seconds: connPkt.keepAliveSeconds)),
             _disconnectFlagStream.stream.first
           ]);
-          if (_disconnectFlag) break;
+          if (_disconnectFlag) {
+            _eventController.add(
+                ShutDown(ShutdownType.clientInitiatedNetworkUnavailable, null));
+            break;
+          }
           continue;
         }
       }
@@ -150,6 +164,7 @@ class CutieMqttClient implements TopicAliasManager {
       if (!reconnect) break;
       connPkt.cleanStart = false;
     }
+    await _dispose();
   }
 
   bool _pingRespReceived = false;
@@ -176,7 +191,15 @@ class CutieMqttClient implements TopicAliasManager {
       final fixedHeaderBytes = await Future.any([
         _activeConnectionState!.streamQ.take(2),
         _activeConnectionState!.pingRespTimeoutCompleter.future,
+        _disconnectFlagStream.stream.first.then(
+          (value) => null,
+        )
       ]);
+      if (_disconnectFlag) {
+        _eventController
+            .add(ShutDown(ShutdownType.clientInitiated, _txDisconnectPacket));
+        break;
+      }
       // ping response not received
       if (fixedHeaderBytes == null) {
         return true;
@@ -193,8 +216,16 @@ class CutieMqttClient implements TopicAliasManager {
       final packetBytes = await Future.any([
         _activeConnectionState!.streamQ
             .take(fixedHeaderParse.data.remainingLength),
-        _activeConnectionState!.pingRespTimeoutCompleter.future
+        _activeConnectionState!.pingRespTimeoutCompleter.future,
+        _disconnectFlagStream.stream.first.then(
+          (value) => null,
+        )
       ]);
+      if (_disconnectFlag) {
+        _eventController
+            .add(ShutDown(ShutdownType.clientInitiated, _txDisconnectPacket));
+        break;
+      }
       //ping response timeout
       if (packetBytes == null) return true;
 
@@ -228,6 +259,8 @@ class CutieMqttClient implements TopicAliasManager {
         // TODO: Handle this case.
       }
     }
+    await networkConnection.transmit(_txDisconnectPacket!.toBytes());
+    return false;
   }
 
   Future<void> publishQos0(TxPublishPacket pubPkt,
@@ -255,5 +288,20 @@ class CutieMqttClient implements TopicAliasManager {
   @override
   int? getTopicAliasMapping(String topic) {
     return _txTopicAliasMap[topic];
+  }
+
+  void disconnect(
+      {DisconnectPacket disconnectPkt =
+          const DisconnectPacket(DisconnectReasonCode.normal)}) {
+    _txDisconnectPacket = disconnectPkt;
+    _disconnectFlag = true;
+    _disconnectFlagStream.add(true);
+  }
+
+  Future<void> _dispose() async {
+    _activeConnectionState?.dispose();
+    await _eventController.close();
+    await _connectionStatusController.close();
+    await _disconnectFlagStream.close();
   }
 }
