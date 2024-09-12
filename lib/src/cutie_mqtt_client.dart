@@ -9,19 +9,35 @@ import 'package:cutie_mqtt/src/mqtt_qos.dart';
 import 'package:cutie_mqtt/src/publish_packet.dart';
 import 'package:cutie_mqtt/src/resettable_periodic_timer.dart';
 
-class MqttActiveConnectionState {
+class MqttActiveConnectionState implements TopicAliasManager {
   final ResettablePeriodicTimer pingTimer;
   final StreamQueue<int> streamQ;
   final Completer<Null> pingRespTimeoutCompleter = Completer<Null>();
+  final Map<String, int> _txTopicAliasMap = {};
 
   MqttActiveConnectionState(this.pingTimer, this.streamQ);
 
   void dispose() {
     pingTimer.stop(dispose: true);
   }
+
+  @override
+  int createTopicAlias(String topic) {
+    int maxAliasNo = _txTopicAliasMap.values.fold(
+        1,
+        (previousValue, element) =>
+            (element > previousValue) ? element : previousValue);
+    _txTopicAliasMap[topic] = maxAliasNo + 1;
+    return maxAliasNo + 1;
+  }
+
+  @override
+  int? getTopicAliasMapping(String topic) {
+    return _txTopicAliasMap[topic];
+  }
 }
 
-class CutieMqttClient implements TopicAliasManager {
+class CutieMqttClient {
   final MqttNetworkConnection networkConnection;
   late String clientId;
   final StreamController<MqttEvent> _eventController =
@@ -265,29 +281,13 @@ class CutieMqttClient implements TopicAliasManager {
 
   Future<void> publishQos0(TxPublishPacket pubPkt,
       {bool waitForConnection = false}) async {
-    final txPkt =
-        InternalTxPublishPacket(null, MqttQos.atMostOnce, pubPkt, this);
     if (waitForConnection && _activeConnectionState == null) {
       await connectionStatusStream.firstWhere((element) => element == true);
     }
+    if (_activeConnectionState == null) return;
+    final txPkt = InternalTxPublishPacket(
+        null, MqttQos.atMostOnce, pubPkt, _activeConnectionState!);
     await networkConnection.transmit(txPkt.bytes);
-  }
-
-  final Map<String, int> _txTopicAliasMap = {};
-
-  @override
-  int createTopicAlias(String topic) {
-    int maxAliasNo = _txTopicAliasMap.values.fold(
-        1,
-        (previousValue, element) =>
-            (element > previousValue) ? element : previousValue);
-    _txTopicAliasMap[topic] = maxAliasNo + 1;
-    return maxAliasNo + 1;
-  }
-
-  @override
-  int? getTopicAliasMapping(String topic) {
-    return _txTopicAliasMap[topic];
   }
 
   void disconnect(
