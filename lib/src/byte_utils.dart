@@ -21,7 +21,7 @@ class StringOrBytes {
     _string = str;
   }
 
-  StringOrBytes.fromBytes(bytes) {
+  StringOrBytes.fromBytes(List<int> bytes) {
     _bytes = bytes;
   }
 

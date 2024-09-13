@@ -11,7 +11,7 @@ class TxPublishPacket {
 
   final MqttFormatIndicator? payloadFormat;
   final int? messageExpiryInterval;
-  final bool useAlias = false;
+  final bool useAlias;
   final String? responseTopic;
   final List<int>? correlationData;
   final Map<String, String> userProperties;
@@ -27,6 +27,7 @@ class TxPublishPacket {
     this.correlationData,
     this.userProperties = const {},
     this.contentType,
+    this.useAlias = false,
   });
 }
 
@@ -39,6 +40,7 @@ abstract class TopicAliasManager {
 //for internal use only
 class InternalTxPublishPacket {
   late final List<int> _bytes;
+
   List<int> get bytes => _bytes;
 
   bool _isDuplicate = false;
@@ -109,4 +111,3 @@ class InternalTxPublishPacket {
     ];
   }
 }
-
