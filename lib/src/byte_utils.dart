@@ -148,9 +148,9 @@ class ByteUtils {
       1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1,
       1, 1, 1, 1, 1, 1, 1, // s7..s8
     ];
-    const UTF8_ACCEPT = 0;
+    const utf8Accept = 0;
 
-    int state = UTF8_ACCEPT;
+    int state = utf8Accept;
     final codePoints = <int>[];
 
     for (final i in data.skip(2).take(strlen)) {
@@ -160,9 +160,9 @@ class ByteUtils {
 
       int type = charTypeLookup[i];
 
-      if (state == UTF8_ACCEPT) codePoints.add(0);
+      if (state == utf8Accept) codePoints.add(0);
 
-      codePoints.last = (state != UTF8_ACCEPT)
+      codePoints.last = (state != utf8Accept)
           ? (i & 0x3f) | (codePoints.last << 6)
           : (0xff >> type) & i;
 
