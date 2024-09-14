@@ -11,14 +11,16 @@ abstract class MqttMessageStorage {
 
   Future<int?> storeMessage(MqttQos qos, TxPublishPacket publishPkt);
 
-  Future<Iterable<(TxPublishPacket, MqttQos, int)>> fetchAll();
+  Future<List<(TxPublishPacket, MqttQos, int)>> fetchAll();
 
   Future<void> remove(int id);
+
+  Future<void> dispose();
 }
 
 // currently only supporting non web platforms so ill use isar
 class IsarMqttMessageStorage extends MqttMessageStorage {
-  final bool Function(MqttQos, TxPublishPacket) filterFunc;
+  final bool Function(MqttQos qos, TxPublishPacket pkt) filterFunc;
   final String databaseDir;
   Isar? isar;
 
@@ -27,26 +29,35 @@ class IsarMqttMessageStorage extends MqttMessageStorage {
   @override
   Future<void> initialize(String clientId) async {
     isar = await Isar.open([TxPublishPktIsarSchema],
-        directory: "databaseDir/$clientId");
+        directory: databaseDir, name: clientId);
   }
 
   @override
-  Future<Iterable<(TxPublishPacket, MqttQos, int)>> fetchAll() async {
-    final isarPkts = await isar!.txPublishPktIsars.where(sort: Sort.asc).findAll();
-    return isarPkts.map((e) => (e.toPkt(), e.qos, e.id));
+  Future<List<(TxPublishPacket, MqttQos, int)>> fetchAll() async {
+    final isarPkts =
+        await isar!.txPublishPktIsars.where(sort: Sort.asc).findAll();
+    return isarPkts.map((e) => (e.toPkt(), e.qos, e.id)).toList();
   }
 
   @override
-  Future<void> remove(int id) async{
-    await isar!.txPublishPktIsars.delete(id);
+  Future<void> remove(int id) async {
+    await isar!.writeTxn(() => isar!.txPublishPktIsars.delete(id));
   }
 
   @override
   Future<int?> storeMessage(MqttQos qos, TxPublishPacket publishPkt) async {
-    bool store = filterFunc(qos,publishPkt);
+    bool store = filterFunc(qos, publishPkt);
     if (!store) return null;
     final isarPkt = TxPublishPktIsar.fromPacket(publishPkt, qos);
-    int id = await isar!.txPublishPktIsars.put(isarPkt);
+
+    int id = await isar!.writeTxn(
+      () => isar!.txPublishPktIsars.put(isarPkt),
+    );
     return id;
+  }
+
+  @override
+  Future<void> dispose() async {
+    await isar?.close();
   }
 }
