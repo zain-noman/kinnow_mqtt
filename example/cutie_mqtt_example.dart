@@ -14,12 +14,6 @@ void main() async {
   eventStream.listen(
     (event) {
       print(event.runtimeType);
-      switch (event) {
-        case ConnAckEvent():
-        // TODO: Handle this case.
-        default:
-        // TODO: Handle this case.
-      }
     },
   );
   await client.publishQos0(
@@ -29,6 +23,6 @@ void main() async {
       StringOrBytes.fromString(
           "joe mama so fat, she wouldn't fit in the mqtt size limit"),
     ),
-    waitForConnection: true,
+    discardIfNotConnected: false,
   );
 }

@@ -4,6 +4,7 @@ import 'package:cutie_mqtt/cutie_mqtt.dart';
 import 'package:cutie_mqtt/src/conn_ack_packet.dart';
 import 'package:cutie_mqtt/src/disconnect_packet.dart';
 import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
+import 'package:cutie_mqtt/src/mqtt_operation_queue.dart';
 import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 import 'package:cutie_mqtt/src/mqtt_qos.dart';
 import 'package:cutie_mqtt/src/publish_packet.dart';
@@ -45,6 +46,8 @@ class CutieMqttClient {
 
   final StreamController<bool> _connectionStatusController =
       StreamController<bool>.broadcast();
+
+  final _operationQueue = MqttOperationQueue<MqttActiveConnectionState>();
 
   Stream<bool> get connectionStatusStream => _connectionStatusController.stream;
 
@@ -170,12 +173,14 @@ class CutieMqttClient {
         ),
         streamQ,
       );
+      _operationQueue.start(_activeConnectionState!);
       _activeConnectionState!.pingTimer.start();
       _connectionStatusController.add(true);
       final reconnect = await _useActiveNetworkConnection();
       _connectionStatusController.add(false);
       _activeConnectionState!.dispose();
       _activeConnectionState = null;
+      _operationQueue.pause();
 
       if (!reconnect) break;
       connPkt.cleanStart = false;
@@ -279,15 +284,18 @@ class CutieMqttClient {
     return false;
   }
 
-  Future<void> publishQos0(TxPublishPacket pubPkt,
-      {bool waitForConnection = false}) async {
-    if (waitForConnection && _activeConnectionState == null) {
-      await connectionStatusStream.firstWhere((element) => element == true);
+  Future<bool> publishQos0(TxPublishPacket pubPkt,
+      {bool discardIfNotConnected = true}) {
+    if (_activeConnectionState == null && discardIfNotConnected) {
+      return Future.value(false);
     }
-    if (_activeConnectionState == null) return;
-    final txPkt = InternalTxPublishPacket(
-        null, MqttQos.atMostOnce, pubPkt, _activeConnectionState!);
-    await networkConnection.transmit(txPkt.bytes);
+    return _operationQueue.addToQueueAndExecute(
+      (state) async {
+        final txPkt = InternalTxPublishPacket(
+            null, MqttQos.atMostOnce, pubPkt, _activeConnectionState!);
+        await networkConnection.transmit(txPkt.bytes);
+      },
+    );
   }
 
   void disconnect(
@@ -303,5 +311,6 @@ class CutieMqttClient {
     await _eventController.close();
     await _connectionStatusController.close();
     await _disconnectFlagStream.close();
+    _operationQueue.dispose();
   }
 }
