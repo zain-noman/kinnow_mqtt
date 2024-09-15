@@ -4,15 +4,16 @@ typedef MqttOperation<T> = Future<void> Function(T state);
 
 class MqttOperationQueue<T> {
   final _controller = StreamController<(MqttOperation<T>, Completer<bool>)>();
-  final _unsentMessages = <(MqttOperation<T>, Completer<bool>)>[];
+  final _queuedOperations = <(MqttOperation<T>, Completer<bool>)>[];
   late StreamSubscription<(MqttOperation<T>, Completer<bool>)> _sub;
   T? _sessionState;
+  bool _pauseFlag = true;
 
   void _onStreamResume() {
-    for (final msgAndComp in _unsentMessages) {
+    for (final msgAndComp in _queuedOperations) {
       _controller.add(msgAndComp);
     }
-    _unsentMessages.clear();
+    _queuedOperations.clear();
   }
 
   MqttOperationQueue() {
@@ -24,7 +25,7 @@ class MqttOperationQueue<T> {
         final (operaton, completer) = data;
         await operaton(_sessionState as T);
         completer.complete(true);
-        _sub.resume();
+        if (!_pauseFlag)_sub.resume();
       },
     );
     _sub.pause();
@@ -33,7 +34,7 @@ class MqttOperationQueue<T> {
   Future<bool> addToQueueAndExecute(MqttOperation<T> operation) {
     final completer = Completer<bool>();
     if (_controller.isPaused) {
-      _unsentMessages.add((operation, completer));
+      _queuedOperations.add((operation, completer));
     } else {
       _controller.add((operation, completer));
     }
@@ -42,16 +43,18 @@ class MqttOperationQueue<T> {
 
   void pause() {
     _sub.pause();
+    _pauseFlag = true;
   }
 
   void start(T sessionState) {
     _sessionState = sessionState;
     _sub.resume();
+    _pauseFlag = false;
   }
 
   void dispose() {
     _controller.close();
-    for (final (_, comp) in _unsentMessages) {
+    for (final (_, comp) in _queuedOperations) {
       comp.complete(false);
     }
   }
