@@ -1,4 +1,4 @@
-import 'package:cutie_mqtt/src/disconnect_packet.dart';
+import 'package:cutie_mqtt/src/packets/disconnect_packet.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 

@@ -232,7 +232,8 @@ class ConnAckPacket {
           }
         case 0x16:
           {
-            final parseResTemp = ByteUtils.parseBinaryData(currentBlock.skip(1));
+            final parseResTemp =
+                ByteUtils.parseBinaryData(currentBlock.skip(1));
             if (parseResTemp == null) return null;
             parseRes = parseResTemp;
             authData = parseRes.data;

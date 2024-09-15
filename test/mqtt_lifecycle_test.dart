@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:cutie_mqtt/cutie_mqtt.dart';
-import 'package:cutie_mqtt/src/disconnect_packet.dart';
+import 'package:cutie_mqtt/src/packets/disconnect_packet.dart';
 import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
 import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 import 'package:test/test.dart';

@@ -12,12 +12,15 @@ void main() {
       expect(ByteUtils.parseVarLengthInt([0xff, 0xff, 0xff, 0xff])?.data, null);
 
       expect(ByteUtils.parseVarLengthInt([0xff, 0xff])?.data, null);
-      expect(ByteUtils.parseVarLengthInt([0xff, 0xff, 0xff, 0xff, 0x01])?.data, null);
+      expect(ByteUtils.parseVarLengthInt([0xff, 0xff, 0xff, 0xff, 0x01])?.data,
+          null);
 
       expect(ByteUtils.parseVarLengthInt([0xff, 0x01, 0xaa, 0xbb])?.data, 255);
-      expect(ByteUtils.parseVarLengthInt([0xff, 0x01, 0xaa, 0xbb])?.nextBlockStart,
+      expect(
+          ByteUtils.parseVarLengthInt([0xff, 0x01, 0xaa, 0xbb])?.nextBlockStart,
           containsAllInOrder([0xaa, 0xbb]));
-      expect(ByteUtils.parseVarLengthInt([0xff, 0x01, 0xaa, 0xbb])?.nextBlockStart,
+      expect(
+          ByteUtils.parseVarLengthInt([0xff, 0x01, 0xaa, 0xbb])?.nextBlockStart,
           isNot(contains([0xaa, 0xbb])));
     },
   );

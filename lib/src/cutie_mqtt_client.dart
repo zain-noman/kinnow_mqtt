@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:async/async.dart';
 import 'package:cutie_mqtt/cutie_mqtt.dart';
-import 'package:cutie_mqtt/src/conn_ack_packet.dart';
-import 'package:cutie_mqtt/src/disconnect_packet.dart';
+import 'package:cutie_mqtt/src/packets/conn_ack_packet.dart';
+import 'package:cutie_mqtt/src/packets/disconnect_packet.dart';
 import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
 import 'package:cutie_mqtt/src/mqtt_operation_queue.dart';
 import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 import 'package:cutie_mqtt/src/mqtt_qos.dart';
-import 'package:cutie_mqtt/src/puback_packet.dart';
-import 'package:cutie_mqtt/src/publish_packet.dart';
+import 'package:cutie_mqtt/src/packets/puback_packet.dart';
+import 'package:cutie_mqtt/src/packets/publish_packet.dart';
 import 'package:cutie_mqtt/src/resettable_periodic_timer.dart';
 
 class MqttActiveConnectionState implements TopicAliasManager {
@@ -270,7 +270,7 @@ class CutieMqttClient {
         case MqttPacketType.puback:
           final puback = PubackPacket.fromBytes(packetBytes);
           if (puback != null) _pubAckController.add(puback);
-          // TODO: malformed packet
+        // TODO: malformed packet
         case MqttPacketType.pubrec:
         // TODO: Handle this case.
         case MqttPacketType.pubrel:

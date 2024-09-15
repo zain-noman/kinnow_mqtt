@@ -1,4 +1,4 @@
-import 'package:cutie_mqtt/src/connect_packet.dart';
+import 'package:cutie_mqtt/src/packets/connect_packet.dart';
 import 'package:cutie_mqtt/src/byte_utils.dart';
 import 'package:test/test.dart';
 

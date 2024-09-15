@@ -1,10 +1,7 @@
-enum MqttQos{
+enum MqttQos {
   atMostOnce,
   atLeastOnce,
   exactlyOnce,
 }
 
-enum MqttFormatIndicator{
-  bytes,
-  utf8
-}
+enum MqttFormatIndicator { bytes, utf8 }

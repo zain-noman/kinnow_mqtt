@@ -1,5 +1,5 @@
-import 'package:cutie_mqtt/src/conn_ack_packet.dart';
-import 'package:cutie_mqtt/src/disconnect_packet.dart';
+import 'package:cutie_mqtt/src/packets/conn_ack_packet.dart';
+import 'package:cutie_mqtt/src/packets/disconnect_packet.dart';
 
 sealed class MqttEvent {}
 

@@ -4,10 +4,10 @@ import 'package:test/test.dart';
 void main() {
   group(
     "Byte Utils Tests",
-        () {
+    () {
       test(
         "makeUtf8StringBytes",
-            () {
+        () {
           expect(ByteUtils.makeUtf8StringBytes("hello"),
               [0x00, 0x05, 0x68, 0x65, 0x6c, 0x6c, 0x6f]);
           expect(ByteUtils.makeUtf8StringBytes(String.fromCharCodes([0xFEEF])),
@@ -16,7 +16,7 @@ void main() {
       );
       test(
         "makeVariableByteInteger",
-            () {
+        () {
           expect(ByteUtils.makeVariableByteInteger(126), [126]);
           expect(ByteUtils.makeVariableByteInteger(128), [0x80, 01]);
           expect(ByteUtils.makeVariableByteInteger(129), [0x81, 01]);
@@ -24,7 +24,7 @@ void main() {
       );
       test(
         "appendProperty",
-            () {
+        () {
           {
             final list = <int>[0xaa, 0xbb, 0xcc];
             ByteUtils.appendOptionalFourByteProperty(12, 0x11, list);
@@ -71,7 +71,7 @@ void main() {
       );
       test(
         "Parsing",
-            () {
+        () {
           {
             final t1 = ByteUtils.parseFourByte([1, 2, 3, 4, 5, 6, 7]);
             expect(t1!.data, 16909060);
@@ -127,7 +127,7 @@ void main() {
       );
       test(
         "Parsing with less length",
-            () {
+        () {
           {
             final t1 = ByteUtils.parseFourByte([1, 2]);
             expect(t1, isNull);
@@ -152,14 +152,17 @@ void main() {
             expect(t3, isNull);
           }
           {
-            final t3 = ByteUtils.parseBinaryData(
-                [0, 5, 0x68, 0x65,]);
-            expect(t3,isNull);
+            final t3 = ByteUtils.parseBinaryData([
+              0,
+              5,
+              0x68,
+              0x65,
+            ]);
+            expect(t3, isNull);
           }
           {
-            final t3 = ByteUtils.parseBinaryData(
-                [0, 1]);
-            expect(t3,isNull);
+            final t3 = ByteUtils.parseBinaryData([0, 1]);
+            expect(t3, isNull);
           }
         },
       );

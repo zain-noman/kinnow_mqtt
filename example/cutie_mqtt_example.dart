@@ -30,7 +30,7 @@ void main() async {
       StringOrBytes.fromString(
           "joe mama so old, she still using mqtt v3.1.1")));
 
-  if (puback != null){
+  if (puback != null) {
     print("puback received");
   }
 }

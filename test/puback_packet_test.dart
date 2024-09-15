@@ -1,4 +1,4 @@
-import 'package:cutie_mqtt/src/puback_packet.dart';
+import 'package:cutie_mqtt/src/packets/puback_packet.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -31,7 +31,7 @@ void main() {
         " packetId, reason and reasonString",
         () {
           final pkt = PubackPacket.fromBytes(
-              [0x01, 0x01, 0x00, 8, 0x1F,0,5, ..."hello".codeUnits]);
+              [0x01, 0x01, 0x00, 8, 0x1F, 0, 5, ..."hello".codeUnits]);
           expect(pkt, isNotNull);
           expect(pkt?.packetId, 257);
           expect(pkt?.reasonCode, PubackReasonCode.success);

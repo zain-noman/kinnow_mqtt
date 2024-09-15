@@ -1,12 +1,12 @@
 import 'package:cutie_mqtt/src/byte_utils.dart';
 import 'package:cutie_mqtt/src/mqtt_qos.dart';
-import 'package:cutie_mqtt/src/publish_packet.dart';
+import 'package:cutie_mqtt/src/packets/publish_packet.dart';
 import 'package:test/test.dart';
 
-class TestAliasMgr implements TopicAliasManager{
+class TestAliasMgr implements TopicAliasManager {
   int aliasId = 0;
-  final Map<String,int> topicsMap = {};
-  
+  final Map<String, int> topicsMap = {};
+
   @override
   int createTopicAlias(String topic) {
     aliasId++;
@@ -17,7 +17,6 @@ class TestAliasMgr implements TopicAliasManager{
   int? getTopicAliasMapping(String topic) {
     return topicsMap[topic];
   }
-  
 }
 
 void main() {
@@ -37,9 +36,25 @@ void main() {
                 StringOrBytes.fromString("testPayload"),
               ),
               aliasMgr);
-          expect(t.bytes, [0x30,18,0,4,..."test".codeUnits,0,..."testPayload".codeUnits]);
+          expect(t.bytes, [
+            0x30,
+            18,
+            0,
+            4,
+            ..."test".codeUnits,
+            0,
+            ..."testPayload".codeUnits
+          ]);
           t.isDuplicate = true;
-          expect(t.bytes, [0x38,18,0,4,..."test".codeUnits,0,..."testPayload".codeUnits]);
+          expect(t.bytes, [
+            0x38,
+            18,
+            0,
+            4,
+            ..."test".codeUnits,
+            0,
+            ..."testPayload".codeUnits
+          ]);
         },
       );
     },
