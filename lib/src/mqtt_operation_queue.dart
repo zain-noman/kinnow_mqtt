@@ -32,6 +32,7 @@ class MqttOperationQueue<T> {
   }
 
   Future<bool> addToQueueAndExecute(MqttOperation<T> operation) {
+    if (_controller.isClosed) return Future.value(false);
     final completer = Completer<bool>();
     if (_controller.isPaused) {
       _queuedOperations.add((operation, completer));

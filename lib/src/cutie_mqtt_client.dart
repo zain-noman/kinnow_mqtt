@@ -17,10 +17,14 @@ class MqttActiveConnectionState implements TopicAliasManager {
   final Completer<Null> pingRespTimeoutCompleter = Completer<Null>();
   final Map<String, int> _txTopicAliasMap = {};
 
+  // receivedPacketStreams
+  final pubAckController = StreamController<PubackPacket>.broadcast();
+
   MqttActiveConnectionState(this.pingTimer, this.streamQ);
 
   void dispose() {
     pingTimer.stop(dispose: true);
+    pubAckController.close();
   }
 
   @override
@@ -56,9 +60,6 @@ class CutieMqttClient {
       StreamController<bool>.broadcast();
 
   final _operationQueue = MqttOperationQueue<MqttActiveConnectionState>();
-
-  // receivedPacketStreams
-  final _pubAckController = StreamController<PubackPacket>.broadcast();
 
   Stream<bool> get connectionStatusStream => _connectionStatusController.stream;
 
@@ -269,7 +270,9 @@ class CutieMqttClient {
         // TODO: Handle this case.
         case MqttPacketType.puback:
           final puback = PubackPacket.fromBytes(packetBytes);
-          if (puback != null) _pubAckController.add(puback);
+          if (puback != null) {
+            _activeConnectionState!.pubAckController.add(puback);
+          }
         // TODO: malformed packet
         case MqttPacketType.pubrec:
         // TODO: Handle this case.
@@ -326,18 +329,17 @@ class CutieMqttClient {
         },
       );
 
+      // the client has shutDown
       if (!sent) return null;
 
-      bool shutDown = false;
-      final pubAck =
-          await _pubAckController.stream.cast<PubackPacket?>().firstWhere(
-        (element) => element?.packetId == packetId,
-        orElse: () {
-          shutDown = true;
-          return null;
-        },
-      ).timeout(const Duration(seconds: 5), onTimeout: () => null);
-      if (shutDown) return null;
+      // this shouldn't happen but in case it does we retry
+      if (_activeConnectionState == null) continue;
+
+      final pubAck = await _activeConnectionState!.pubAckController.stream
+          .cast<PubackPacket?>()
+          .firstWhere((element) => element?.packetId == packetId,
+              orElse: () => null)
+          .timeout(const Duration(seconds: 5), onTimeout: () => null);
 
       if (pubAck != null) return pubAck;
 
@@ -358,7 +360,6 @@ class CutieMqttClient {
     await _eventController.close();
     await _connectionStatusController.close();
     await _disconnectFlagStream.close();
-    await _pubAckController.close();
     _operationQueue.dispose();
   }
 }
