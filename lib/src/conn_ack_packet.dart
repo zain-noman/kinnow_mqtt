@@ -161,7 +161,7 @@ class ConnAckPacket {
             parseRes = parseResTemp;
             topicAliasMaximum = parseRes.data;
           }
-        case 0x31:
+        case 0x1F:
           {
             final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
             if (parseResTemp == null) return null;
