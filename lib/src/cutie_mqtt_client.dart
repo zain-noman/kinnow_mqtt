@@ -7,6 +7,7 @@ import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
 import 'package:cutie_mqtt/src/mqtt_operation_queue.dart';
 import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 import 'package:cutie_mqtt/src/mqtt_qos.dart';
+import 'package:cutie_mqtt/src/puback_packet.dart';
 import 'package:cutie_mqtt/src/publish_packet.dart';
 import 'package:cutie_mqtt/src/resettable_periodic_timer.dart';
 
@@ -36,6 +37,13 @@ class MqttActiveConnectionState implements TopicAliasManager {
   int? getTopicAliasMapping(String topic) {
     return _txTopicAliasMap[topic];
   }
+
+  int _packetIdGenerator = 0;
+
+  int generatePacketId() {
+    _packetIdGenerator++;
+    return _packetIdGenerator;
+  }
 }
 
 class CutieMqttClient {
@@ -48,6 +56,9 @@ class CutieMqttClient {
       StreamController<bool>.broadcast();
 
   final _operationQueue = MqttOperationQueue<MqttActiveConnectionState>();
+
+  // receivedPacketStreams
+  final _pubAckController = StreamController<PubackPacket>.broadcast();
 
   Stream<bool> get connectionStatusStream => _connectionStatusController.stream;
 
@@ -257,7 +268,9 @@ class CutieMqttClient {
         case MqttPacketType.publish:
         // TODO: Handle this case.
         case MqttPacketType.puback:
-        // TODO: Handle this case.
+          final puback = PubackPacket.fromBytes(packetBytes);
+          if (puback != null) _pubAckController.add(puback);
+          // TODO: malformed packet
         case MqttPacketType.pubrec:
         // TODO: Handle this case.
         case MqttPacketType.pubrel:
@@ -298,6 +311,40 @@ class CutieMqttClient {
     );
   }
 
+  Future<PubackPacket?> publishQos1(TxPublishPacket pubPkt) async {
+    bool isDuplicate = false;
+    while (true) {
+      int packetId = 0;
+
+      final sent = await _operationQueue.addToQueueAndExecute(
+        (state) async {
+          packetId = state.generatePacketId();
+          final internalPkt = InternalTxPublishPacket(
+              packetId, MqttQos.atLeastOnce, pubPkt, state);
+          if (isDuplicate) internalPkt.isDuplicate = true;
+          await networkConnection.transmit(internalPkt.bytes);
+        },
+      );
+
+      if (!sent) return null;
+
+      bool shutDown = false;
+      final pubAck =
+          await _pubAckController.stream.cast<PubackPacket?>().firstWhere(
+        (element) => element?.packetId == packetId,
+        orElse: () {
+          shutDown = true;
+          return null;
+        },
+      ).timeout(const Duration(seconds: 5), onTimeout: () => null);
+      if (shutDown) return null;
+
+      if (pubAck != null) return pubAck;
+
+      isDuplicate = true;
+    }
+  }
+
   void disconnect(
       {DisconnectPacket disconnectPkt =
           const DisconnectPacket(DisconnectReasonCode.normal)}) {
@@ -311,6 +358,7 @@ class CutieMqttClient {
     await _eventController.close();
     await _connectionStatusController.close();
     await _disconnectFlagStream.close();
+    await _pubAckController.close();
     _operationQueue.dispose();
   }
 }

@@ -12,9 +12,7 @@ void main() async {
   );
   final eventStream = client.begin(connPkt);
   eventStream.listen(
-    (event) {
-      print(event.runtimeType);
-    },
+    (event) => print(event.runtimeType),
   );
   await client.publishQos0(
     TxPublishPacket(
@@ -25,4 +23,14 @@ void main() async {
     ),
     discardIfNotConnected: false,
   );
+
+  final puback = await client.publishQos1(TxPublishPacket(
+      false,
+      "zainTestTopic",
+      StringOrBytes.fromString(
+          "joe mama so old, she still using mqtt v3.1.1")));
+
+  if (puback != null){
+    print("puback received");
+  }
 }
