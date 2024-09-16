@@ -53,6 +53,61 @@ void main() {
               ]);
         },
       );
+
+
+      test(
+        " packetId, reason and reasonString, but pubrec",
+            () {
+          final pkt = PubrecPacket.fromBytes(
+              [0x01, 0x01, 0x00, 8, 0x1F, 0, 5, ..."hello".codeUnits]);
+          expect(pkt, isNotNull);
+          expect(pkt?.packetId, 257);
+          expect(pkt?.reasonCode, PubackReasonCode.success);
+          expect(pkt?.reasonString, "hello");
+          expect(pkt?.userProperties, isEmpty);
+        },
+      );
+      test(
+        "puback to Bytes, but pubrec",
+            () {
+          expect(
+              PubrecPacket(5, PubackReasonCode.success, "bruh", {}).toBytes(),
+              [
+                0x50,11,
+                00,05,
+                00,
+                7,
+                0x1F,0,4,..."bruh".codeUnits,
+              ]);
+        },
+      );
+
+      test(
+        " packetId, reason and reasonString, but pubcomp",
+            () {
+          final pkt = PubcompPacket.fromBytes(
+              [0x01, 0x01, 0x00, 8, 0x1F, 0, 5, ..."hello".codeUnits]);
+          expect(pkt, isNotNull);
+          expect(pkt?.packetId, 257);
+          expect(pkt?.reasonCode, PubcompReasonCode.success);
+          expect(pkt?.reasonString, "hello");
+          expect(pkt?.userProperties, isEmpty);
+        },
+      );
+      test(
+        "to Bytes, but pubcomp",
+            () {
+          expect(
+              PubcompPacket(5, PubcompReasonCode.success, "bruh", {}).toBytes(),
+              [
+                0x70,11,
+                00,05,
+                00,
+                7,
+                0x1F,0,4,..."bruh".codeUnits,
+              ]);
+        },
+      );
     },
   );
 }

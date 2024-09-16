@@ -3,66 +3,36 @@ import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 
 import '../byte_utils.dart';
 
-enum PubackReasonCode {
-  success,
-  noMatchingSubscribers,
-  unspecifiedError,
-  implementationSpecificError,
-  notAuthorized,
-  topicNameInvalid,
-  packetIdentifierInUse,
-  quotaExceeded,
-  payloadFormatInvalid,
-}
-
-class PubackPacket {
+class PubCommonPacket<T> {
   final int packetId;
-  final PubackReasonCode? reasonCode;
-  String? reasonString;
-  Map<String, String> userProperties;
+  final T? reasonCode;
+  final String? reasonString;
+  final Map<String, String> userProperties;
 
-  PubackPacket(
-      this.packetId, this.reasonCode, this.reasonString, this.userProperties);
+  final Map<T, int> toByteLookup;
+  final Map<int, T> fromByteLookup;
 
-  static const _byteToReasonCodeLookup = {
-    0x00: PubackReasonCode.success,
-    0x10: PubackReasonCode.noMatchingSubscribers,
-    0x80: PubackReasonCode.unspecifiedError,
-    0x83: PubackReasonCode.implementationSpecificError,
-    0x87: PubackReasonCode.notAuthorized,
-    0x90: PubackReasonCode.topicNameInvalid,
-    0x91: PubackReasonCode.packetIdentifierInUse,
-    0x97: PubackReasonCode.quotaExceeded,
-    0x99: PubackReasonCode.payloadFormatInvalid,
-  };
+  PubCommonPacket(this.packetId, this.reasonCode, this.reasonString,
+      this.userProperties, this.toByteLookup, this.fromByteLookup);
 
-  static const _reasonCodeToByteLookup = {
-    PubackReasonCode.success: 0x00,
-    PubackReasonCode.noMatchingSubscribers: 0x10,
-    PubackReasonCode.unspecifiedError: 0x80,
-    PubackReasonCode.implementationSpecificError: 0x83,
-    PubackReasonCode.notAuthorized: 0x87,
-    PubackReasonCode.topicNameInvalid: 0x90,
-    PubackReasonCode.packetIdentifierInUse: 0x91,
-    PubackReasonCode.quotaExceeded: 0x97,
-    PubackReasonCode.payloadFormatInvalid: 0x99,
-  };
-
-  static PubackPacket? fromBytes(Iterable<int> bytes) {
+  static PubCommonPacket<TT>? fromBytes<TT>(Iterable<int> bytes,
+      Map<TT, int> toByteLookup, Map<int, TT> fromByteLookup) {
     final packetIdParseRes = ByteUtils.parseTwoByte(bytes);
     if (packetIdParseRes == null) return null;
     final packetId = packetIdParseRes.data;
     if (packetIdParseRes.nextBlockStart.isEmpty) {
-      return PubackPacket(packetId, null, null, const {});
+      return PubCommonPacket(
+          packetId, null, null, const {}, toByteLookup, fromByteLookup);
     }
 
     final reasonCode =
-        _byteToReasonCodeLookup[packetIdParseRes.nextBlockStart.elementAt(0)];
+        fromByteLookup[packetIdParseRes.nextBlockStart.elementAt(0)];
     if (reasonCode == null) return null;
 
     // no property length
     if (packetIdParseRes.nextBlockStart.length == 1) {
-      return PubackPacket(packetId, reasonCode, null, const {});
+      return PubCommonPacket(
+          packetId, reasonCode, null, const {}, toByteLookup, fromByteLookup);
     }
 
     final propertyLenRes =
@@ -100,13 +70,13 @@ class PubackPacket {
       bytesDone += 1 + parseRes.bytesConsumed;
       currentBlock = parseRes.nextBlockStart;
     }
-    return PubackPacket(packetId, reasonCode, reasonString, userProperties);
+    return PubCommonPacket(packetId, reasonCode, reasonString, userProperties,
+        toByteLookup, fromByteLookup);
   }
 
-  List<int> toBytes() {
-
+  List<int> toBytesInternal(MqttPacketType type) {
     final props = <int>[];
-    if (reasonString !=null){
+    if (reasonString != null) {
       props.add(0x1F);
       props.addAll(ByteUtils.makeUtf8StringBytes(reasonString!));
     }
@@ -115,16 +85,132 @@ class PubackPacket {
     final body = <int>[
       (packetId >> 8) & 0xFF,
       packetId & 0xFF,
-      if(reasonCode!=null)
-        _reasonCodeToByteLookup[reasonCode]!,
-      if(props.isNotEmpty)
-        ...ByteUtils.makeVariableByteInteger(props.length),
-      if(props.isNotEmpty)
-        ...props,
+      if (reasonCode != null) toByteLookup[reasonCode]!,
+      if (props.isNotEmpty) ...ByteUtils.makeVariableByteInteger(props.length),
+      if (props.isNotEmpty) ...props,
     ];
-    return [
-      ...MqttFixedHeader(MqttPacketType.puback, 0, body.length).toBytes(),
-      ...body
-    ];
+    return [...MqttFixedHeader(type, 0, body.length).toBytes(), ...body];
   }
+}
+
+enum PubackReasonCode {
+  success,
+  noMatchingSubscribers,
+  unspecifiedError,
+  implementationSpecificError,
+  notAuthorized,
+  topicNameInvalid,
+  packetIdentifierInUse,
+  quotaExceeded,
+  payloadFormatInvalid,
+}
+
+typedef PubrecReasonCode = PubackReasonCode;
+
+const _byteToPubackReasonCodeLookup = {
+  0x00: PubackReasonCode.success,
+  0x10: PubackReasonCode.noMatchingSubscribers,
+  0x80: PubackReasonCode.unspecifiedError,
+  0x83: PubackReasonCode.implementationSpecificError,
+  0x87: PubackReasonCode.notAuthorized,
+  0x90: PubackReasonCode.topicNameInvalid,
+  0x91: PubackReasonCode.packetIdentifierInUse,
+  0x97: PubackReasonCode.quotaExceeded,
+  0x99: PubackReasonCode.payloadFormatInvalid,
+};
+
+const _pubackReasonCodeToByteLookup = {
+  PubackReasonCode.success: 0x00,
+  PubackReasonCode.noMatchingSubscribers: 0x10,
+  PubackReasonCode.unspecifiedError: 0x80,
+  PubackReasonCode.implementationSpecificError: 0x83,
+  PubackReasonCode.notAuthorized: 0x87,
+  PubackReasonCode.topicNameInvalid: 0x90,
+  PubackReasonCode.packetIdentifierInUse: 0x91,
+  PubackReasonCode.quotaExceeded: 0x97,
+  PubackReasonCode.payloadFormatInvalid: 0x99,
+};
+
+enum PubrelReasonCode {
+  success,
+  packetIdentifierNotFound;
+}
+
+typedef PubcompReasonCode = PubrelReasonCode;
+
+const _byteToPubrelReasonCodeLookup = {
+  0x00: PubrelReasonCode.success,
+  0x92: PubrelReasonCode.packetIdentifierNotFound
+};
+const _pubrelReasonCodeToByteLookup = {
+  PubrelReasonCode.success: 0x00,
+  PubrelReasonCode.packetIdentifierNotFound: 0x92,
+};
+
+class PubackPacket extends PubCommonPacket<PubackReasonCode> {
+  PubackPacket(int packetId, PubackReasonCode? reasonCode, String? reasonString,
+      Map<String, String> userProperties)
+      : super(packetId, reasonCode, reasonString, userProperties,
+            _pubackReasonCodeToByteLookup, _byteToPubackReasonCodeLookup);
+
+  static PubackPacket? fromBytes(Iterable<int> bytes) {
+    final res = PubCommonPacket.fromBytes(
+        bytes, _pubackReasonCodeToByteLookup, _byteToPubackReasonCodeLookup);
+    if (res == null) return null;
+    return PubackPacket(
+        res.packetId, res.reasonCode, res.reasonString, res.userProperties);
+  }
+
+  List<int> toBytes() => toBytesInternal(MqttPacketType.puback);
+}
+
+class PubrecPacket extends PubCommonPacket<PubackReasonCode> {
+  PubrecPacket(int packetId, PubackReasonCode? reasonCode, String? reasonString,
+      Map<String, String> userProperties)
+      : super(packetId, reasonCode, reasonString, userProperties,
+            _pubackReasonCodeToByteLookup, _byteToPubackReasonCodeLookup);
+
+  static PubrecPacket? fromBytes(Iterable<int> bytes) {
+    final res = PubCommonPacket.fromBytes(
+        bytes, _pubackReasonCodeToByteLookup, _byteToPubackReasonCodeLookup);
+    if (res == null) return null;
+    return PubrecPacket(
+        res.packetId, res.reasonCode, res.reasonString, res.userProperties);
+  }
+
+  List<int> toBytes() => toBytesInternal(MqttPacketType.pubrec);
+}
+
+class PubrelPacket extends PubCommonPacket<PubrelReasonCode> {
+  PubrelPacket(int packetId, PubrelReasonCode? reasonCode, String? reasonString,
+      Map<String, String> userProperties)
+      : super(packetId, reasonCode, reasonString, userProperties,
+            _pubrelReasonCodeToByteLookup, _byteToPubrelReasonCodeLookup);
+
+  static PubrelPacket? fromBytes(Iterable<int> bytes) {
+    final res = PubCommonPacket.fromBytes(
+        bytes, _pubrelReasonCodeToByteLookup, _byteToPubrelReasonCodeLookup);
+    if (res == null) return null;
+    return PubrelPacket(
+        res.packetId, res.reasonCode, res.reasonString, res.userProperties);
+  }
+
+  List<int> toBytes() => toBytesInternal(MqttPacketType.pubrel);
+}
+
+class PubcompPacket extends PubCommonPacket<PubrelReasonCode> {
+  PubcompPacket(int packetId, PubcompReasonCode? reasonCode,
+      String? reasonString, Map<String, String> userProperties)
+      : super(packetId, reasonCode, reasonString, userProperties,
+            _pubrelReasonCodeToByteLookup, _byteToPubrelReasonCodeLookup);
+
+  static PubcompPacket? fromBytes(Iterable<int> bytes) {
+    final res = PubCommonPacket.fromBytes(
+        bytes, _pubrelReasonCodeToByteLookup, _byteToPubrelReasonCodeLookup);
+    if (res == null) return null;
+    return PubcompPacket(
+        res.packetId, res.reasonCode, res.reasonString, res.userProperties);
+  }
+
+  List<int> toBytes() => toBytesInternal(MqttPacketType.pubcomp);
 }
