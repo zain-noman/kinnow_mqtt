@@ -15,7 +15,9 @@ class MqttActiveConnectionState implements TopicAliasManager {
   final ResettablePeriodicTimer pingTimer;
   final StreamQueue<int> streamQ;
   final Completer<Null> pingRespTimeoutCompleter = Completer<Null>();
+
   final Map<String, int> _txTopicAliasMap = {};
+  final Map<int, String> _rxTopicAliasMap = {};
 
   // receivedPacketStreams
   final pubAckController = StreamController<PubackPacket>.broadcast();
@@ -28,7 +30,7 @@ class MqttActiveConnectionState implements TopicAliasManager {
   }
 
   @override
-  int createTopicAlias(String topic) {
+  int createTxTopicAlias(String topic) {
     int maxAliasNo = _txTopicAliasMap.values.fold(
         1,
         (previousValue, element) =>
@@ -38,7 +40,7 @@ class MqttActiveConnectionState implements TopicAliasManager {
   }
 
   @override
-  int? getTopicAliasMapping(String topic) {
+  int? getTxTopicAlias(String topic) {
     return _txTopicAliasMap[topic];
   }
 
@@ -47,6 +49,16 @@ class MqttActiveConnectionState implements TopicAliasManager {
   int generatePacketId() {
     _packetIdGenerator++;
     return _packetIdGenerator;
+  }
+
+  @override
+  void createRxTopicAlias(String topic, int alias) {
+    _rxTopicAliasMap[alias] = topic;
+  }
+
+  @override
+  String? getTopicForRxAlias(int alias) {
+    return _rxTopicAliasMap[alias];
   }
 }
 
