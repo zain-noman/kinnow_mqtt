@@ -109,35 +109,42 @@ class CutieMqttClient {
       _eventController.add(NetworkConnectionFailure());
       return (false, null);
     }
-    print("network Connected");
     // byteStream.listen((event) => print("socket data: $event"),
     //     onDone: () => print("stream finished"));
     networkConnection.transmit(connPkt.toBytes(clientId));
-    print("connect sent");
 
     final streamQ = StreamQueue<int>(byteStream);
-    final connackFixedHdr = await Future.any(
-      [Future.delayed(const Duration(seconds: 3), () => null), streamQ.take(2)],
+    bool timedOut = false;
+    final (connackFixedHdr, socketEnd, bytesTaken) =
+        await MqttFixedHeader.fromStreamQueue(streamQ).timeout(
+      const Duration(seconds: 3),
+      onTimeout: () {
+        timedOut = true;
+        return (null, false, null);
+      },
     );
-    print("$connackFixedHdr");
-    if (connackFixedHdr == null) {
+
+    if (timedOut) {
       _eventController.add(ConnackTimedOut());
       return (false, null);
     }
 
-    // handle case where the stream ends before 2 bytes
-    if (connackFixedHdr.length != 2) {
+    if (socketEnd) {
       _eventController.add(NetworkEnded());
       return (false, null);
     }
 
-    final fixedHdr = MqttFixedHeader.fromBytes(connackFixedHdr);
-    if (fixedHdr!.data.packetType != MqttPacketType.connack) {
-      _eventController
-          .add(MalformedPacket(connackFixedHdr, message: "expected CONNACK"));
+    if (connackFixedHdr == null) {
+      _eventController.add(MalformedPacket(bytesTaken!, message: "expected CONNACK"));
       return (true, null);
     }
-    final remLen = fixedHdr.data.remainingLength;
+
+    if (connackFixedHdr.packetType != MqttPacketType.connack) {
+      _eventController
+          .add(MalformedPacket(bytesTaken!, message: "expected CONNACK"));
+      return (true, null);
+    }
+    final remLen = connackFixedHdr.remainingLength;
 
     final connackBytes = await Future.any([
       streamQ.take(remLen),
