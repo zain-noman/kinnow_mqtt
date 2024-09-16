@@ -1,3 +1,6 @@
+import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
+import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
+
 import '../byte_utils.dart';
 
 enum PubackReasonCode {
@@ -31,6 +34,18 @@ class PubackPacket {
     0x91: PubackReasonCode.packetIdentifierInUse,
     0x97: PubackReasonCode.quotaExceeded,
     0x99: PubackReasonCode.payloadFormatInvalid,
+  };
+
+  static const _reasonCodeToByteLookup = {
+    PubackReasonCode.success: 0x00,
+    PubackReasonCode.noMatchingSubscribers: 0x10,
+    PubackReasonCode.unspecifiedError: 0x80,
+    PubackReasonCode.implementationSpecificError: 0x83,
+    PubackReasonCode.notAuthorized: 0x87,
+    PubackReasonCode.topicNameInvalid: 0x90,
+    PubackReasonCode.packetIdentifierInUse: 0x91,
+    PubackReasonCode.quotaExceeded: 0x97,
+    PubackReasonCode.payloadFormatInvalid: 0x99,
   };
 
   static PubackPacket? fromBytes(Iterable<int> bytes) {
@@ -86,5 +101,30 @@ class PubackPacket {
       currentBlock = parseRes.nextBlockStart;
     }
     return PubackPacket(packetId, reasonCode, reasonString, userProperties);
+  }
+
+  List<int> toBytes() {
+
+    final props = <int>[];
+    if (reasonString !=null){
+      props.add(0x1F);
+      props.addAll(ByteUtils.makeUtf8StringBytes(reasonString!));
+    }
+    ByteUtils.appendStringPairProperty(userProperties, 0x26, props);
+
+    final body = <int>[
+      (packetId >> 8) & 0xFF,
+      packetId & 0xFF,
+      if(reasonCode!=null)
+        _reasonCodeToByteLookup[reasonCode]!,
+      if(props.isNotEmpty)
+        ...ByteUtils.makeVariableByteInteger(props.length),
+      if(props.isNotEmpty)
+        ...props,
+    ];
+    return [
+      ...MqttFixedHeader(MqttPacketType.puback, 0, body.length).toBytes(),
+      ...body
+    ];
   }
 }

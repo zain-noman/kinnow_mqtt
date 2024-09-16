@@ -39,6 +39,20 @@ void main() {
           expect(pkt?.userProperties, isEmpty);
         },
       );
+      test(
+        "puback to Bytes",
+        () {
+          expect(
+              PubackPacket(5, PubackReasonCode.success, "bruh", {}).toBytes(),
+              [
+                0x40,11,
+                00,05,
+                00,
+                7,
+                0x1F,0,4,..."bruh".codeUnits,
+              ]);
+        },
+      );
     },
   );
 }
