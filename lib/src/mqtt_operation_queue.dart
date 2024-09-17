@@ -2,10 +2,16 @@ import 'dart:async';
 
 typedef MqttOperation<T> = Future<void> Function(T state);
 
+enum OperationResult {
+  operationExecuted,
+  operationCanceledByPause,
+  operationCanceledByShutdown
+}
+
 class MqttOperationData<T> {
   final MqttOperation<T> operation;
   final int queueToken;
-  final Completer<bool> completer;
+  final Completer<OperationResult> completer;
 
   MqttOperationData(this.operation, this.queueToken, this.completer);
 }
@@ -17,7 +23,8 @@ class MqttOperationQueue<T> {
   T? _sessionState;
 
   int _nextToxenToGive = 0;
-  int generateToken(){
+
+  int generateToken() {
     final retVal = _nextToxenToGive;
     _nextToxenToGive++;
     return retVal;
@@ -87,20 +94,29 @@ class MqttOperationQueue<T> {
           })
         ]);
         if (opCompleted) {
-          op.completer.complete(true);
+          op.completer.complete(OperationResult.operationExecuted);
           _queuedOperations.remove(op);
         } else {
           if (exit) return;
           break;
         }
       }
+
+      //complete remaining with Operation Canceled By Pause
+      while (_queuedOperations.isNotEmpty) {
+        final op = _queuedOperations.first;
+        op.completer.complete(OperationResult.operationCanceledByPause);
+        _queuedOperations.remove(op);
+      }
     }
   }
 
-  Future<bool> addToQueueAndExecute(
+  Future<OperationResult> addToQueueAndExecute(
       int queueToken, MqttOperation<T> operation) {
-    if (_operationAddedNotifier.isClosed) return Future.value(false);
-    final completer = Completer<bool>();
+    if (_operationAddedNotifier.isClosed) {
+      return Future.value(OperationResult.operationCanceledByShutdown);
+    }
+    final completer = Completer<OperationResult>();
     final opData = MqttOperationData(operation, queueToken, completer);
     var insertIdx = _queuedOperations
         .indexWhere((element) => element.queueToken > queueToken);
@@ -126,7 +142,7 @@ class MqttOperationQueue<T> {
     _operationAddedNotifier.close();
     for (final opData in _queuedOperations) {
       if (!opData.completer.isCompleted) {
-        opData.completer.complete(false);
+        opData.completer.complete(OperationResult.operationCanceledByShutdown);
       }
     }
   }

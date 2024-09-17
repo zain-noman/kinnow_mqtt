@@ -47,7 +47,7 @@ void main() {
               opOrder.add(3);
             },
           );
-          expect(fut3success, true);
+          expect(fut3success, OperationResult.operationExecuted);
           expect(opOrder, [1,2,3]);
 
           q.pause();
@@ -71,7 +71,6 @@ void main() {
           expect(opOrder, [1, 2, 3, 1, 4]);
         },
       );
-
       test(
         "pause functioning with dispose",
         () async {
@@ -93,9 +92,10 @@ void main() {
           expect(fut1Completed, true);
 
           q.pause();
+          await Future.delayed(const Duration(seconds: 1));
 
           bool fut2Completed = false;
-          bool? fut2Val;
+          OperationResult? fut2Val;
           q.addToQueueAndExecute(
             2,
             (state) async {
@@ -108,9 +108,9 @@ void main() {
           await Future.delayed(const Duration(seconds: 1));
           expect(fut2Completed, false);
           q.dispose();
-          await Future.delayed(const Duration(seconds: 1));
+          await Future.delayed(const Duration(seconds: 2));
           expect(fut2Completed, true);
-          expect(fut2Val, false);
+          expect(fut2Val, OperationResult.operationCanceledByShutdown);
         },
       );
     },

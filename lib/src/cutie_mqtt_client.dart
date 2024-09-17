@@ -329,7 +329,7 @@ class CutieMqttClient {
             null, MqttQos.atMostOnce, pubPkt, _activeConnectionState!);
         await networkConnection.transmit(txPkt.bytes);
       },
-    );
+    ).then((value) => value == OperationResult.operationExecuted);
   }
 
   Future<PubackPacket?> publishQos1(TxPublishPacket pubPkt) async {
@@ -349,10 +349,9 @@ class CutieMqttClient {
         },
       );
 
-      // the client has shutDown
-      if (!sent) return null;
+      if (sent == OperationResult.operationCanceledByShutdown) return null;
 
-      // this shouldn't happen but in case it does we retry
+      if (sent == OperationResult.operationCanceledByPause) continue;
       if (_activeConnectionState == null) continue;
 
       final pubAck = await _activeConnectionState!.pubAckController.stream
