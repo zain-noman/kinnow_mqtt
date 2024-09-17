@@ -2,61 +2,132 @@ import 'dart:async';
 
 typedef MqttOperation<T> = Future<void> Function(T state);
 
-class MqttOperationQueue<T> {
-  final _controller = StreamController<(MqttOperation<T>, Completer<bool>)>();
-  final _queuedOperations = <(MqttOperation<T>, Completer<bool>)>[];
-  late StreamSubscription<(MqttOperation<T>, Completer<bool>)> _sub;
-  T? _sessionState;
-  bool _pauseFlag = true;
+class MqttOperationData<T> {
+  final MqttOperation<T> operation;
+  final int queueToken;
+  final Completer<bool> completer;
 
-  void _onStreamResume() {
-    for (final msgAndComp in _queuedOperations) {
-      _controller.add(msgAndComp);
-    }
-    _queuedOperations.clear();
+  MqttOperationData(this.operation, this.queueToken, this.completer);
+}
+
+class MqttOperationQueue<T> {
+  final _pauseController = StreamController<bool>();
+  final _queuedOperations = <MqttOperationData<T>>[];
+  final _operationAddedNotifier = StreamController<Null>();
+  T? _sessionState;
+
+  int _nextToxenToGive = 0;
+  int generateToken(){
+    final retVal = _nextToxenToGive;
+    _nextToxenToGive++;
+    return retVal;
   }
 
   MqttOperationQueue() {
-    _controller.onResume = _onStreamResume;
-    _sub = _controller.stream.listen(null);
-    _sub.onData(
-      (data) async {
-        _sub.pause();
-        final (operaton, completer) = data;
-        await operaton(_sessionState as T);
-        completer.complete(true);
-        if (!_pauseFlag)_sub.resume();
-      },
-    );
-    _sub.pause();
+    _internalLoop();
   }
 
-  Future<bool> addToQueueAndExecute(MqttOperation<T> operation) {
-    if (_controller.isClosed) return Future.value(false);
-    final completer = Completer<bool>();
-    if (_controller.isPaused) {
-      _queuedOperations.add((operation, completer));
-    } else {
-      _controller.add((operation, completer));
+  Future<bool> _waitIterValue(StreamIterator<bool> iter, bool value) async {
+    while (true) {
+      final gotValue = await iter.moveNext();
+      if (!gotValue) return false;
+      if (iter.current == value) return true;
     }
+  }
+
+  void _internalLoop() async {
+    final pauseIterator = StreamIterator(_pauseController.stream);
+    final opAddedIterator = StreamIterator(_operationAddedNotifier.stream);
+
+    Future<bool> opAddedFut = opAddedIterator.moveNext();
+    while (true) {
+      //wait for start
+      final iterGetSuccess = await _waitIterValue(pauseIterator, false);
+      if (!iterGetSuccess) return;
+
+      var pauseIteratorEventFut = _waitIterValue(pauseIterator, true);
+      // execute queued operations until pause is received
+      while (true) {
+        //get operation
+        var pauseReceived = false;
+        while (_queuedOperations.isEmpty) {
+          var exit = false;
+          final opReceived = await Future.any([
+            opAddedFut.then(
+              (value) {
+                exit = !value;
+                return true;
+              },
+            ),
+            pauseIteratorEventFut.then(
+              (value) {
+                exit = !value;
+                return false;
+              },
+            )
+          ]);
+          if (exit) return;
+          if (!opReceived) {
+            pauseReceived = true;
+            break;
+          }
+          opAddedFut = opAddedIterator.moveNext();
+        }
+        if (pauseReceived) break;
+        //insertions should ensure _queuedOperations is sorted by queueToken
+        final op = _queuedOperations.first;
+
+        final opFut = op.operation(_sessionState as T);
+        bool exit = false;
+        final opCompleted = await Future.any([
+          opFut.then((value) => true),
+          pauseIteratorEventFut.then((streamNotEnded) {
+            if (streamNotEnded == false) exit = true;
+            return false;
+          })
+        ]);
+        if (opCompleted) {
+          op.completer.complete(true);
+          _queuedOperations.remove(op);
+        } else {
+          if (exit) return;
+          break;
+        }
+      }
+    }
+  }
+
+  Future<bool> addToQueueAndExecute(
+      int queueToken, MqttOperation<T> operation) {
+    if (_operationAddedNotifier.isClosed) return Future.value(false);
+    final completer = Completer<bool>();
+    final opData = MqttOperationData(operation, queueToken, completer);
+    var insertIdx = _queuedOperations
+        .indexWhere((element) => element.queueToken > queueToken);
+    if (insertIdx == -1) insertIdx = _queuedOperations.length;
+    _queuedOperations.insert(insertIdx, opData);
+    _operationAddedNotifier.add(null);
     return completer.future;
   }
 
   void pause() {
-    _sub.pause();
-    _pauseFlag = true;
+    if (_pauseController.isClosed) return;
+    _pauseController.add(true);
   }
 
   void start(T sessionState) {
+    if (_pauseController.isClosed) return;
     _sessionState = sessionState;
-    _sub.resume();
-    _pauseFlag = false;
+    _pauseController.add(false);
   }
 
   void dispose() {
-    _controller.close();
-    for (final (_, comp) in _queuedOperations) {
-      comp.complete(false);
+    _pauseController.close();
+    _operationAddedNotifier.close();
+    for (final opData in _queuedOperations) {
+      if (!opData.completer.isCompleted) {
+        opData.completer.complete(false);
+      }
     }
   }
 }

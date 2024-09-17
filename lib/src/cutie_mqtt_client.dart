@@ -135,7 +135,8 @@ class CutieMqttClient {
     }
 
     if (connackFixedHdr == null) {
-      _eventController.add(MalformedPacket(bytesTaken!, message: "expected CONNACK"));
+      _eventController
+          .add(MalformedPacket(bytesTaken!, message: "expected CONNACK"));
       return (true, null);
     }
 
@@ -319,12 +320,10 @@ class CutieMqttClient {
     return false;
   }
 
-  Future<bool> publishQos0(TxPublishPacket pubPkt,
-      {bool discardIfNotConnected = true}) {
-    if (_activeConnectionState == null && discardIfNotConnected) {
-      return Future.value(false);
-    }
+  Future<bool> publishQos0(TxPublishPacket pubPkt) {
+    final token = _operationQueue.generateToken();
     return _operationQueue.addToQueueAndExecute(
+      token,
       (state) async {
         final txPkt = InternalTxPublishPacket(
             null, MqttQos.atMostOnce, pubPkt, _activeConnectionState!);
@@ -335,10 +334,12 @@ class CutieMqttClient {
 
   Future<PubackPacket?> publishQos1(TxPublishPacket pubPkt) async {
     bool isDuplicate = false;
+    final token = _operationQueue.generateToken();
     while (true) {
       int packetId = 0;
 
       final sent = await _operationQueue.addToQueueAndExecute(
+        token,
         (state) async {
           packetId = state.generatePacketId();
           final internalPkt = InternalTxPublishPacket(

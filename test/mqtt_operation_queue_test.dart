@@ -16,6 +16,7 @@ void main() {
           final opOrder = <int>[];
 
           q.addToQueueAndExecute(
+            1,
             (state) async {
               await Future.delayed(const Duration(seconds: 2));
               expect(state, 1);
@@ -23,6 +24,7 @@ void main() {
             },
           ).then((_) => fut1Completed = true);
           q.addToQueueAndExecute(
+            2,
             (state) async {
               expect(state, 1);
               opOrder.add(2);
@@ -37,6 +39,36 @@ void main() {
           expect(fut1Completed, true);
           expect(fut2Completed, true);
           expect(opOrder, [1, 2]);
+
+          final fut3success = await q.addToQueueAndExecute(
+            3,
+                (state) async {
+              expect(state, 1);
+              opOrder.add(3);
+            },
+          );
+          expect(fut3success, true);
+          expect(opOrder, [1,2,3]);
+
+          q.pause();
+          await Future.delayed(const Duration(seconds: 1));
+          q.addToQueueAndExecute(
+            4,
+            (state) async {
+              expect(state, 1);
+              opOrder.add(4);
+            },
+          );
+          q.addToQueueAndExecute(
+            1,
+            (state) async {
+              expect(state, 1);
+              opOrder.add(1);
+            },
+          );
+          q.start(1);
+          await Future.delayed(const Duration(seconds: 1));
+          expect(opOrder, [1, 2, 3, 1, 4]);
         },
       );
 
@@ -48,6 +80,7 @@ void main() {
           bool fut1Completed = false;
 
           q.addToQueueAndExecute(
+            1,
             (state) async {
               expect(state, 1);
             },
@@ -64,6 +97,7 @@ void main() {
           bool fut2Completed = false;
           bool? fut2Val;
           q.addToQueueAndExecute(
+            2,
             (state) async {
               expect(state, 1);
             },

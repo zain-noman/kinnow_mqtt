@@ -14,15 +14,12 @@ void main() async {
   eventStream.listen(
     (event) => print(event.runtimeType),
   );
-  await client.publishQos0(
-    TxPublishPacket(
-      false,
-      "zainTestTopic",
-      StringOrBytes.fromString(
-          "joe mama so fat, she wouldn't fit in the mqtt size limit"),
-    ),
-    discardIfNotConnected: false,
-  );
+  await client.publishQos0(TxPublishPacket(
+    false,
+    "zainTestTopic",
+    StringOrBytes.fromString(
+        "joe mama so fat, she wouldn't fit in the mqtt size limit"),
+  ));
 
   final puback = await client.publishQos1(TxPublishPacket(
       false,
