@@ -30,4 +30,14 @@ void main() async {
   if (puback != null) {
     print("puback received");
   }
+
+  final qos2res = await client.publishQos2(TxPublishPacket(
+      false,
+      "zainTestTopic",
+      StringOrBytes.fromString(
+          "joe mama so dumb, her mqtt client needs to be connected to send messages")));
+
+  if (qos2res != null) {
+    print("pubrec and pubcomp received");
+  }
 }

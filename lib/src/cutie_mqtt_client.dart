@@ -21,12 +21,15 @@ class MqttActiveConnectionState implements TopicAliasManager {
 
   // receivedPacketStreams
   final pubAckController = StreamController<PubackPacket>.broadcast();
+  final pubRecController = StreamController<PubrecPacket>.broadcast();
+  final pubCompController = StreamController<PubcompPacket>.broadcast();
 
   MqttActiveConnectionState(this.pingTimer, this.streamQ);
 
   void dispose() {
     pingTimer.stop(dispose: true);
     pubAckController.close();
+    pubRecController.close();
   }
 
   @override
@@ -42,13 +45,6 @@ class MqttActiveConnectionState implements TopicAliasManager {
   @override
   int? getTxTopicAlias(String topic) {
     return _txTopicAliasMap[topic];
-  }
-
-  int _packetIdGenerator = 0;
-
-  int generatePacketId() {
-    _packetIdGenerator++;
-    return _packetIdGenerator;
   }
 
   @override
@@ -295,11 +291,19 @@ class CutieMqttClient {
           }
         // TODO: malformed packet
         case MqttPacketType.pubrec:
-        // TODO: Handle this case.
+          final pubrec = PubrecPacket.fromBytes(packetBytes);
+          if (pubrec != null) {
+            _activeConnectionState!.pubRecController.add(pubrec);
+          }
+        // TODO: malformed packet
         case MqttPacketType.pubrel:
         // TODO: Handle this case.
         case MqttPacketType.pubcomp:
-        // TODO: Handle this case.
+        final pubcomp = PubcompPacket.fromBytes(packetBytes);
+        if (pubcomp != null) {
+          _activeConnectionState!.pubCompController.add(pubcomp);
+        }
+      // TODO: malformed packet
         case MqttPacketType.suback:
         // TODO: Handle this case.
         case MqttPacketType.unsuback:
@@ -332,16 +336,21 @@ class CutieMqttClient {
     ).then((value) => value == OperationResult.operationExecuted);
   }
 
+  int _packetIdGenerator = 0;
+
+  int generatePacketId() {
+    _packetIdGenerator++;
+    return _packetIdGenerator;
+  }
+
   Future<PubackPacket?> publishQos1(TxPublishPacket pubPkt) async {
     bool isDuplicate = false;
     final token = _operationQueue.generateToken();
+    final packetId = generatePacketId();
     while (true) {
-      int packetId = 0;
-
       final sent = await _operationQueue.addToQueueAndExecute(
         token,
         (state) async {
-          packetId = state.generatePacketId();
           final internalPkt = InternalTxPublishPacket(
               packetId, MqttQos.atLeastOnce, pubPkt, state);
           if (isDuplicate) internalPkt.isDuplicate = true;
@@ -364,6 +373,67 @@ class CutieMqttClient {
 
       isDuplicate = true;
     }
+  }
+
+  Future<(PubrecPacket,PubcompPacket)?> publishQos2(TxPublishPacket pubPkt) async {
+    bool isDuplicate = false;
+    final token = _operationQueue.generateToken();
+    final packetId = generatePacketId();
+
+    PubrecPacket? pubRec;
+    while (true) {
+      final sent = await _operationQueue.addToQueueAndExecute(
+        token,
+        (state) async {
+          final internalPkt = InternalTxPublishPacket(
+              packetId, MqttQos.exactlyOnce, pubPkt, state);
+          if (isDuplicate) internalPkt.isDuplicate = true;
+          await networkConnection.transmit(internalPkt.bytes);
+        },
+      );
+
+      if (sent == OperationResult.operationCanceledByShutdown) return null;
+
+      if (sent == OperationResult.operationCanceledByPause) continue;
+      if (_activeConnectionState == null) continue;
+
+      pubRec = await _activeConnectionState!.pubRecController.stream
+          .cast<PubrecPacket?>()
+          .firstWhere((element) => element?.packetId == packetId,
+              orElse: () => null)
+          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+
+      if (pubRec != null) break;
+
+      isDuplicate = true;
+    }
+
+    PubcompPacket? pubComp;
+    while (true) {
+      final sent = await _operationQueue.addToQueueAndExecute(
+        token,
+        (state) async {
+          await networkConnection
+              .transmit(PubrelPacket(packetId, null, null, const {}).toBytes());
+        },
+      );
+
+      if (sent == OperationResult.operationCanceledByShutdown) return null;
+
+      if (sent == OperationResult.operationCanceledByPause) continue;
+      if (_activeConnectionState == null) continue;
+
+      pubComp = await _activeConnectionState!.pubCompController.stream
+          .cast<PubcompPacket?>()
+          .firstWhere((element) => element?.packetId == packetId,
+              orElse: () => null)
+          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+
+      if (pubComp != null) break;
+
+      isDuplicate = true;
+    }
+    return(pubRec,pubComp);
   }
 
   void disconnect(
