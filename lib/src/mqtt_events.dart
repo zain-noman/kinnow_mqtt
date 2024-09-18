@@ -8,7 +8,7 @@ class NetworkConnectionFailure extends MqttEvent {}
 class NetworkEnded extends MqttEvent {}
 
 class MalformedPacket extends MqttEvent {
-  final List<int> packetBytes;
+  final List<int>? packetBytes;
   final String? message;
 
   MalformedPacket(this.packetBytes, {this.message});

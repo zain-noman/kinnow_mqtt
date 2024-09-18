@@ -1,4 +1,6 @@
 import 'package:cutie_mqtt/cutie_mqtt.dart';
+import 'package:cutie_mqtt/src/mqtt_qos.dart';
+import 'package:cutie_mqtt/src/packets/subscribe_packet.dart';
 
 void main() async {
   final client =
@@ -31,6 +33,7 @@ void main() async {
     print("puback received");
   }
 
+  /*
   final qos2res = await client.publishQos2(TxPublishPacket(
       false,
       "zainTestTopic",
@@ -40,4 +43,26 @@ void main() async {
   if (qos2res != null) {
     print("pubrec and pubcomp received");
   }
+   */
+
+  final suback = await client.subscribe(SubscribePacket([
+    TopicSubscription("likeShareAndSubscribe", MqttQos.atMostOnce),
+    TopicSubscription("MistOrBeast", MqttQos.atLeastOnce),
+  ]));
+  if (suback != null) {
+    print("suback received");
+    int idx = 0;
+    for (final reason in suback.reasonCodes) {
+      print("topic $idx success ${reason.name}");
+      idx++;
+    }
+  }
+
+  client.receivedMessagesStream.listen(
+    (event) => print("Packet Received "
+        "\n \t topic: ${event.topic},"
+        "\n \t qos: ${event.qos},"
+        "\n \t payload: ${event.payload.asString}"
+    ),
+  );
 }

@@ -9,6 +9,8 @@ import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
 import 'package:cutie_mqtt/src/mqtt_qos.dart';
 import 'package:cutie_mqtt/src/packets/puback_packet.dart';
 import 'package:cutie_mqtt/src/packets/publish_packet.dart';
+import 'package:cutie_mqtt/src/packets/suback_packet.dart';
+import 'package:cutie_mqtt/src/packets/subscribe_packet.dart';
 import 'package:cutie_mqtt/src/resettable_periodic_timer.dart';
 
 class MqttActiveConnectionState implements TopicAliasManager {
@@ -23,6 +25,7 @@ class MqttActiveConnectionState implements TopicAliasManager {
   final pubAckController = StreamController<PubackPacket>.broadcast();
   final pubRecController = StreamController<PubrecPacket>.broadcast();
   final pubCompController = StreamController<PubcompPacket>.broadcast();
+  final subAckController = StreamController<SubackPacket>.broadcast();
 
   MqttActiveConnectionState(this.pingTimer, this.streamQ);
 
@@ -79,6 +82,11 @@ class CutieMqttClient {
   final StreamController<bool> _disconnectFlagStream =
       StreamController<bool>.broadcast();
   DisconnectPacket? _txDisconnectPacket;
+
+  final _rxPacketController = StreamController<RxPublishPacket>.broadcast();
+
+  Stream<RxPublishPacket> get receivedMessagesStream =>
+      _rxPacketController.stream;
 
   CutieMqttClient(this.networkConnection, {String? initClientId}) {
     clientId =
@@ -283,7 +291,13 @@ class CutieMqttClient {
       }
       switch (fixedHeaderParse.data.packetType) {
         case MqttPacketType.publish:
-        // TODO: Handle this case.
+          final (rxPub, aliasIssue) = RxPublishPacket.fromBytes(packetBytes,
+              fixedHeaderParse.data.flags, _activeConnectionState!);
+          if (rxPub == null) {
+            // TODO: Handle malformed packet and alias issue
+            break;
+          }
+          _handleRxPublishPkt(rxPub);
         case MqttPacketType.puback:
           final puback = PubackPacket.fromBytes(packetBytes);
           if (puback != null) {
@@ -297,15 +311,23 @@ class CutieMqttClient {
           }
         // TODO: malformed packet
         case MqttPacketType.pubrel:
-        // TODO: Handle this case.
+          final pubRel = PubrelPacket.fromBytes(packetBytes);
+          if (pubRel != null) {
+            _handlePubrelPacket(pubRel);
+          }
+        // TODO: malformed packet
         case MqttPacketType.pubcomp:
-        final pubcomp = PubcompPacket.fromBytes(packetBytes);
-        if (pubcomp != null) {
-          _activeConnectionState!.pubCompController.add(pubcomp);
-        }
-      // TODO: malformed packet
+          final pubcomp = PubcompPacket.fromBytes(packetBytes);
+          if (pubcomp != null) {
+            _activeConnectionState!.pubCompController.add(pubcomp);
+          }
+        // TODO: malformed packet
         case MqttPacketType.suback:
-        // TODO: Handle this case.
+          final suback = SubackPacket.fromBytes(packetBytes);
+          if (suback!= null){
+            _activeConnectionState!.subAckController.add(suback);
+          }
+        // TODO: malformed packet
         case MqttPacketType.unsuback:
         // TODO: Handle this case.
         case MqttPacketType.pingresp:
@@ -375,7 +397,8 @@ class CutieMqttClient {
     }
   }
 
-  Future<(PubrecPacket,PubcompPacket)?> publishQos2(TxPublishPacket pubPkt) async {
+  Future<(PubrecPacket, PubcompPacket)?> publishQos2(
+      TxPublishPacket pubPkt) async {
     bool isDuplicate = false;
     final token = _operationQueue.generateToken();
     final packetId = generatePacketId();
@@ -433,7 +456,34 @@ class CutieMqttClient {
 
       isDuplicate = true;
     }
-    return(pubRec,pubComp);
+    return (pubRec, pubComp);
+  }
+
+  Future<SubackPacket?> subscribe(SubscribePacket sub_pkt) async {
+    final token = _operationQueue.generateToken();
+    final packetId = generatePacketId();
+    final pktBytes = InternalSubscribePacket(packetId, sub_pkt).toBytes();
+    while (true) {
+      final sent = await _operationQueue.addToQueueAndExecute(
+        token,
+        (state) async {
+          await networkConnection.transmit(pktBytes);
+        },
+      );
+
+      if (sent == OperationResult.operationCanceledByShutdown) return null;
+
+      if (sent == OperationResult.operationCanceledByPause) continue;
+      if (_activeConnectionState == null) continue;
+
+      final subAck = await _activeConnectionState!.subAckController.stream
+          .cast<SubackPacket?>()
+          .firstWhere((element) => element?.packetId == packetId,
+              orElse: () => null)
+          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+
+      if (subAck != null) return subAck;
+    }
   }
 
   void disconnect(
@@ -450,5 +500,63 @@ class CutieMqttClient {
     await _connectionStatusController.close();
     await _disconnectFlagStream.close();
     _operationQueue.dispose();
+  }
+
+  final _qos2MessagesAwaitingRelease = <int, RxPublishPacket>{};
+
+  void _handleRxPublishPkt(RxPublishPacket rxPub) {
+    switch (rxPub.qos) {
+      case MqttQos.atMostOnce:
+        _rxPacketController.add(rxPub);
+      case MqttQos.atLeastOnce:
+        if (rxPub.packetId == null) {
+          _eventController.add(
+              MalformedPacket(null, message: "qos1 received without packetId"));
+          return;
+        }
+        final token = _operationQueue.generateToken();
+        unawaited(_operationQueue.addToQueueAndExecute(
+          token,
+          (state) async {
+            networkConnection.transmit(
+                PubackPacket(rxPub.packetId!, null, null, const {}).toBytes());
+          },
+        ));
+        _rxPacketController.add(rxPub);
+      case MqttQos.exactlyOnce:
+        if (rxPub.packetId == null) {
+          _eventController.add(
+              MalformedPacket(null, message: "qos1 received without packetId"));
+          return;
+        }
+        _qos2MessagesAwaitingRelease[rxPub.packetId!] = rxPub;
+    }
+  }
+
+  void _handlePubrelPacket(PubrelPacket pubRel) {
+    final correspondingMessage = _qos2MessagesAwaitingRelease[pubRel.packetId];
+    if (correspondingMessage != null) {
+      final token = _operationQueue.generateToken();
+      unawaited(_operationQueue.addToQueueAndExecute(
+        token,
+        (state) async {
+          networkConnection.transmit(
+              PubcompPacket(pubRel.packetId, null, null, const {}).toBytes());
+        },
+      ));
+      _qos2MessagesAwaitingRelease.remove(pubRel.packetId);
+      _rxPacketController.add(correspondingMessage);
+    } else {
+      final token = _operationQueue.generateToken();
+      unawaited(_operationQueue.addToQueueAndExecute(
+        token,
+        (state) async {
+          networkConnection.transmit(PubcompPacket(
+              pubRel.packetId,
+              PubcompReasonCode.packetIdentifierNotFound,
+              null, const {}).toBytes());
+        },
+      ));
+    }
   }
 }
