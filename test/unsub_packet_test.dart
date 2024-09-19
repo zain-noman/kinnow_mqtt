@@ -1,4 +1,5 @@
-import 'package:cutie_mqtt/src/packets/unsubscribe_packet.dart';
+import 'package:kinnow_mqtt/src/packets/unsubscribe_packet.dart';
+
 import 'package:test/test.dart';
 
 void main() {

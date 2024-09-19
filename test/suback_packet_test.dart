@@ -1,4 +1,4 @@
-import 'package:cutie_mqtt/src/packets/suback_packet.dart';
+import 'package:kinnow_mqtt/kinnow_mqtt.dart';
 import 'package:test/test.dart';
 
 void main() {

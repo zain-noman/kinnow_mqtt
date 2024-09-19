@@ -1,6 +1,7 @@
-import 'package:cutie_mqtt/src/byte_utils.dart';
-import 'package:cutie_mqtt/src/mqtt_qos.dart';
-import 'package:cutie_mqtt/src/packets/publish_packet.dart';
+import 'package:kinnow_mqtt/kinnow_mqtt.dart';
+import 'package:kinnow_mqtt/src/mqtt_qos.dart';
+import 'package:kinnow_mqtt/src/packets/publish_packet.dart';
+
 import 'package:test/test.dart';
 
 class TestAliasMgr implements TopicAliasManager {

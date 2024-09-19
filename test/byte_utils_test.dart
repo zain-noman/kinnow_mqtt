@@ -1,4 +1,4 @@
-import 'package:cutie_mqtt/src/byte_utils.dart';
+import 'package:kinnow_mqtt/src/byte_utils.dart';
 import 'package:test/test.dart';
 
 void main() {

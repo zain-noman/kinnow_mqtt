@@ -1,5 +1,6 @@
-import 'package:cutie_mqtt/src/mqtt_qos.dart';
-import 'package:cutie_mqtt/src/packets/subscribe_packet.dart';
+import 'package:kinnow_mqtt/src/mqtt_qos.dart';
+import 'package:kinnow_mqtt/src/packets/subscribe_packet.dart';
+
 import 'package:test/test.dart';
 
 void main() {

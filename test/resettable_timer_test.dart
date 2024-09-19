@@ -1,4 +1,4 @@
-import 'package:cutie_mqtt/src/resettable_periodic_timer.dart';
+import 'package:kinnow_mqtt/src/resettable_periodic_timer.dart';
 import 'package:test/test.dart';
 
 void main() {

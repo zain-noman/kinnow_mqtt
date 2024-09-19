@@ -1,6 +1,6 @@
 import 'package:async/async.dart';
-import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
-import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
+import 'package:kinnow_mqtt/src/mqtt_fixed_header.dart';
+import 'package:kinnow_mqtt/src/mqtt_packet_types.dart';
 import 'package:test/test.dart';
 
 void main() {

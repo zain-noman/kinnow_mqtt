@@ -1,4 +1,4 @@
-import 'package:cutie_mqtt/src/packets/conn_ack_packet.dart';
+import 'package:kinnow_mqtt/src/packets/conn_ack_packet.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -1,4 +1,4 @@
-import 'package:cutie_mqtt/src/mqtt_operation_queue.dart';
+import 'package:kinnow_mqtt/src/mqtt_operation_queue.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
