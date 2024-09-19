@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:async/async.dart';
+import 'packets/unsubscribe_packet.dart';
+import 'packets/unsuback_packet.dart';
 import 'packets/conn_ack_packet.dart';
 import 'packets/disconnect_packet.dart';
 import 'mqtt_fixed_header.dart';
@@ -28,6 +30,7 @@ class MqttActiveConnectionState implements TopicAliasManager {
   final pubRecController = StreamController<PubrecPacket>.broadcast();
   final pubCompController = StreamController<PubcompPacket>.broadcast();
   final subAckController = StreamController<SubackPacket>.broadcast();
+  final unsubAckController = StreamController<UnsubackPacket>.broadcast();
 
   MqttActiveConnectionState(this.pingTimer, this.streamQ);
 
@@ -331,7 +334,11 @@ class KinnowMqttClient {
           }
         // TODO: malformed packet
         case MqttPacketType.unsuback:
-        // TODO: Handle this case.
+          final unsuback = UnsubackPacket.fromBytes(packetBytes);
+          if (unsuback!= null){
+            _activeConnectionState!.unsubAckController.add(unsuback);
+          }
+        // TODO: malformed packet
         case MqttPacketType.pingresp:
           _eventController.add(PingRespReceived());
           _pingRespReceived = true;
@@ -485,6 +492,33 @@ class KinnowMqttClient {
           .timeout(const Duration(seconds: 5), onTimeout: () => null);
 
       if (subAck != null) return subAck;
+    }
+  }
+
+  Future<UnsubackPacket?> unsubscribe(UnsubscribePacket unsub_pkt) async {
+    final token = _operationQueue.generateToken();
+    final packetId = generatePacketId();
+    final pktBytes = InternalUnsubscribePacket(packetId, unsub_pkt).toBytes();
+    while (true) {
+      final sent = await _operationQueue.addToQueueAndExecute(
+        token,
+            (state) async {
+          await networkConnection.transmit(pktBytes);
+        },
+      );
+
+      if (sent == OperationResult.operationCanceledByShutdown) return null;
+
+      if (sent == OperationResult.operationCanceledByPause) continue;
+      if (_activeConnectionState == null) continue;
+
+      final unsubAck = await _activeConnectionState!.unsubAckController.stream
+          .cast<UnsubackPacket?>()
+          .firstWhere((element) => element?.packetId == packetId,
+          orElse: () => null)
+          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+
+      if (unsubAck != null) return unsubAck;
     }
   }
 

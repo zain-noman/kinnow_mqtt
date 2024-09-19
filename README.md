@@ -23,8 +23,7 @@ The project is still in its initial stages and needs your help!!. If you face an
 1. Adding support for SSL/TLS
 2. Adding support for Websockets
 3. Mqtt Message Storage (WIP)
-4. Implementing unsubscribe
-5. Implementing Authentication Packets
-6. Handling Server initiated disconnections
-7. Handling malformed packets
-8. Ensuring shutdown closes everything
+4. Implementing Authentication Packets
+5. Handling Server initiated disconnections
+6. Handling malformed packets
+7. Ensuring shutdown closes everything
