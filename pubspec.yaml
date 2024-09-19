@@ -1,6 +1,6 @@
 name: kinnow_mqtt
-description: A mqtt 5 client
-version: 0.0.1
+description: A Mqtt 5 client designed with lifecycle management and IoT in mind.
+version: 0.0.2
 repository: https://github.com/zain-noman/kinnow_mqtt
 
 environment:

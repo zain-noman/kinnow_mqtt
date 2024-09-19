@@ -14,7 +14,7 @@ The library is built with unreliable networks in mind. The client ensures that o
 ![Client Lifecycle](Kinnow_Mqtt_Lifecycle.png)
 
 ## What's with the name?
-Kinnow (pronounced kee-noo) is a fruit grown in Pakistan and India. Its very similar to orange, but is a bit less tangy and mor pulpy.
+Kinnow (pronounced kee-noo) is a fruit grown in Pakistan and India. Its very similar to orange, but is a bit less tangy and more pulpy.
 
 ## Contributing
 The project is still in its initial stages and needs your help!!. If you face any issue, please do report it. If you have any feature request, also mention it in the issues. 
