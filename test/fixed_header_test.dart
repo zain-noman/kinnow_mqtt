@@ -9,9 +9,9 @@ void main() {
     () {
       test(
         "t1",
-        ()async {
+        () async {
           final q = StreamQueue(Stream.fromIterable([0x00]));
-          final (t,streamEnded,_) = await MqttFixedHeader.fromStreamQueue(q);
+          final (t, streamEnded, _) = await MqttFixedHeader.fromStreamQueue(q);
           expect(t, isNull);
           expect(streamEnded, true);
         },
@@ -20,7 +20,7 @@ void main() {
         "t2",
         () async {
           final q = StreamQueue(Stream.fromIterable([0x15, 11]));
-          final (t,streamEnded,_) = await MqttFixedHeader.fromStreamQueue(q);
+          final (t, streamEnded, _) = await MqttFixedHeader.fromStreamQueue(q);
           expect(t, isNotNull);
           expect(t!.packetType, MqttPacketType.connect);
           expect(t.flags, 0x05);
@@ -29,9 +29,9 @@ void main() {
       );
       test(
         "t3",
-            () async {
-          final q = StreamQueue(Stream.fromIterable([0x15, 0x80,0x01]));
-          final (t,streamEnded,_) = await MqttFixedHeader.fromStreamQueue(q);
+        () async {
+          final q = StreamQueue(Stream.fromIterable([0x15, 0x80, 0x01]));
+          final (t, streamEnded, _) = await MqttFixedHeader.fromStreamQueue(q);
           expect(t, isNotNull);
           expect(t!.packetType, MqttPacketType.connect);
           expect(t.flags, 0x05);

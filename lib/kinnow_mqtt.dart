@@ -7,10 +7,10 @@ export 'src/packets/pub_misc_packet.dart'
     show PubackPacket, PubrecPacket, PubrelPacket, PubcompPacket;
 export 'src/packets/publish_packet.dart' show TxPublishPacket, RxPublishPacket;
 export 'src/packets/suback_packet.dart';
-export 'src/packets/subscribe_packet.dart' show SubscribePacket, TopicSubscription;
+export 'src/packets/subscribe_packet.dart'
+    show SubscribePacket, TopicSubscription;
 export 'src/packets/unsuback_packet.dart';
 export 'src/packets/unsubscribe_packet.dart' show UnsubscribePacket;
-
 
 export 'src/byte_utils.dart' show StringOrBytes;
 export 'src/kinnow_mqtt_client.dart' show KinnowMqttClient;

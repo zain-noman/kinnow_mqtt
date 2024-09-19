@@ -42,13 +42,13 @@ void main() {
 
           final fut3success = await q.addToQueueAndExecute(
             3,
-                (state) async {
+            (state) async {
               expect(state, 1);
               opOrder.add(3);
             },
           );
           expect(fut3success, OperationResult.operationExecuted);
-          expect(opOrder, [1,2,3]);
+          expect(opOrder, [1, 2, 3]);
 
           q.pause();
           await Future.delayed(const Duration(seconds: 1));

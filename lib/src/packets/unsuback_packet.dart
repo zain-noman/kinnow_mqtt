@@ -16,8 +16,8 @@ class UnsubackPacket {
   String? reasonString;
   Map<String, String> userProperties;
 
-  UnsubackPacket(this.packetId, this.reasonCodes, this.reasonString,
-      this.userProperties);
+  UnsubackPacket(
+      this.packetId, this.reasonCodes, this.reasonString, this.userProperties);
 
   static const _byteToReasonCodeLookup = {
     0x00: UnsubackReasonCode.success,
@@ -35,7 +35,7 @@ class UnsubackPacket {
     final packetId = packetIdParseRes.data;
 
     final propertyLenRes =
-    ByteUtils.parseVarLengthInt(packetIdParseRes.nextBlockStart);
+        ByteUtils.parseVarLengthInt(packetIdParseRes.nextBlockStart);
     if (propertyLenRes == null) return null;
 
     String? reasonString;

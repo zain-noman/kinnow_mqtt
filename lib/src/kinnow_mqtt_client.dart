@@ -329,13 +329,13 @@ class KinnowMqttClient {
         // TODO: malformed packet
         case MqttPacketType.suback:
           final suback = SubackPacket.fromBytes(packetBytes);
-          if (suback!= null){
+          if (suback != null) {
             _activeConnectionState!.subAckController.add(suback);
           }
         // TODO: malformed packet
         case MqttPacketType.unsuback:
           final unsuback = UnsubackPacket.fromBytes(packetBytes);
-          if (unsuback!= null){
+          if (unsuback != null) {
             _activeConnectionState!.unsubAckController.add(unsuback);
           }
         // TODO: malformed packet
@@ -502,7 +502,7 @@ class KinnowMqttClient {
     while (true) {
       final sent = await _operationQueue.addToQueueAndExecute(
         token,
-            (state) async {
+        (state) async {
           await networkConnection.transmit(pktBytes);
         },
       );
@@ -515,7 +515,7 @@ class KinnowMqttClient {
       final unsubAck = await _activeConnectionState!.unsubAckController.stream
           .cast<UnsubackPacket?>()
           .firstWhere((element) => element?.packetId == packetId,
-          orElse: () => null)
+              orElse: () => null)
           .timeout(const Duration(seconds: 5), onTimeout: () => null);
 
       if (unsubAck != null) return unsubAck;

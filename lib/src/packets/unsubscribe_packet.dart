@@ -14,18 +14,18 @@ class InternalUnsubscribePacket {
   final int packetId;
   final UnsubscribePacket unSub;
 
-  InternalUnsubscribePacket(this.packetId,this.unSub);
+  InternalUnsubscribePacket(this.packetId, this.unSub);
 
-  List<int> toBytes(){
-    final props = <int> [];
+  List<int> toBytes() {
+    final props = <int>[];
     ByteUtils.appendStringPairProperty(unSub.userProperties, 0x26, props);
     final body = <int>[
-      packetId>>8,
-      packetId&0xFF,
+      packetId >> 8,
+      packetId & 0xFF,
       ...ByteUtils.makeVariableByteInteger(props.length),
       ...props
     ];
-    for (final topicFilter in unSub.topicFilters){
+    for (final topicFilter in unSub.topicFilters) {
       body.addAll(ByteUtils.makeUtf8StringBytes(topicFilter));
     }
     return [
