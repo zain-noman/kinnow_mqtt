@@ -1,17 +1,19 @@
 import 'dart:async';
 import 'package:async/async.dart';
-import 'package:cutie_mqtt/cutie_mqtt.dart';
-import 'package:cutie_mqtt/src/packets/conn_ack_packet.dart';
-import 'package:cutie_mqtt/src/packets/disconnect_packet.dart';
-import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
-import 'package:cutie_mqtt/src/mqtt_operation_queue.dart';
-import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
-import 'package:cutie_mqtt/src/mqtt_qos.dart';
-import 'package:cutie_mqtt/src/packets/puback_packet.dart';
-import 'package:cutie_mqtt/src/packets/publish_packet.dart';
-import 'package:cutie_mqtt/src/packets/suback_packet.dart';
-import 'package:cutie_mqtt/src/packets/subscribe_packet.dart';
-import 'package:cutie_mqtt/src/resettable_periodic_timer.dart';
+import 'packets/conn_ack_packet.dart';
+import 'packets/disconnect_packet.dart';
+import 'mqtt_fixed_header.dart';
+import 'mqtt_operation_queue.dart';
+import 'mqtt_packet_types.dart';
+import 'mqtt_qos.dart';
+import 'packets/pub_misc_packet.dart';
+import 'packets/publish_packet.dart';
+import 'packets/suback_packet.dart';
+import 'packets/subscribe_packet.dart';
+import 'resettable_periodic_timer.dart';
+import 'mqtt_network_connections.dart';
+import 'mqtt_events.dart';
+import 'packets/connect_packet.dart';
 
 class MqttActiveConnectionState implements TopicAliasManager {
   final ResettablePeriodicTimer pingTimer;
@@ -61,7 +63,7 @@ class MqttActiveConnectionState implements TopicAliasManager {
   }
 }
 
-class CutieMqttClient {
+class KinnowMqttClient {
   final MqttNetworkConnection networkConnection;
   late String clientId;
   final StreamController<MqttEvent> _eventController =
@@ -88,7 +90,7 @@ class CutieMqttClient {
   Stream<RxPublishPacket> get receivedMessagesStream =>
       _rxPacketController.stream;
 
-  CutieMqttClient(this.networkConnection, {String? initClientId}) {
+  KinnowMqttClient(this.networkConnection, {String? initClientId}) {
     clientId =
         initClientId ?? "cutie_mqtt_${DateTime.now().millisecondsSinceEpoch}";
     _disconnectFlagStream.onListen = () {

@@ -1,6 +1,7 @@
-import 'package:cutie_mqtt/cutie_mqtt.dart';
-import 'package:cutie_mqtt/src/mqtt_qos.dart';
+import '../mqtt_qos.dart';
 import 'package:isar/isar.dart';
+import '../packets/publish_packet.dart';
+import '../byte_utils.dart';
 
 part 'tx_publish_pkt_isar.g.dart';
 

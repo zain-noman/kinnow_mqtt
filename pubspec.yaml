@@ -1,7 +1,7 @@
-name: cutie_mqtt
-description: A starting point for Dart libraries or applications.
-version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+name: kinnow_mqtt
+description: A mqtt 5 client
+version: 0.0.1
+repository: https://github.com/zain-noman/kinnow_mqtt
 
 environment:
   sdk: ^3.4.1

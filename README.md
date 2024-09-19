@@ -1,39 +1,30 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Kinnow MQTT 🍊
+A Mqtt 5 Client for dart. Key features include
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages).
+### 1. Lifecycle Management
+The Kinnow Mqtt Client will retry on automatically retry connection if it fails. It will also reconnect if the connection breaks after reconnection. The lifecycle is explained in detail in a later section.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages).
--->
+### 2. Detailed insights
+Kinnow Mqtt client functions will return any corresponding acknowledgement packets. For example calling subscribe will return the SubAck Packet sent by the broker, A publishQos1 call will return the PubAck. For events that occur without any calls such as ping requests and ping response, An event stream is provided
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+### 3. Built for Unreliable Networks
+The library is built with unreliable networks in mind. The client ensures that operations are completed regardless of connection state. This means the user doesn't need to monitor the connection status before starting any operation
 
-## Features
+## Client Lifecycle
+![Client Lifecycle](Kinnow_Mqtt_Lifecycle.png)
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+## What's with the name?
+Kinnow (pronounced kee-noo) is a fruit grown in Pakistan and India. Its very similar to orange, but is a bit less tangy and mor pulpy.
 
-## Getting started
+## Contributing
+The project is still in its initial stages and needs your help!!. If you face any issue, please do report it. If you have any feature request, also mention it in the issues. 
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
-```dart
-const like = 'sample';
-```
-
-## Additional information
-
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+## Roadmap
+1. Adding support for SSL/TLS
+2. Adding support for Websockets
+3. Mqtt Message Storage (WIP)
+4. Implementing unsubscribe
+5. Implementing Authentication Packets
+6. Handling Server initiated disconnections
+7. Handling malformed packets
+8. Ensuring shutdown closes everything

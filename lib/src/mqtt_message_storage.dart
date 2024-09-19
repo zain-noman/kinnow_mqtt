@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:cutie_mqtt/cutie_mqtt.dart';
-import 'package:cutie_mqtt/src/isar/tx_publish_pkt_isar.dart';
-import 'package:cutie_mqtt/src/mqtt_qos.dart';
+import 'isar/tx_publish_pkt_isar.dart';
+import 'mqtt_qos.dart';
 import 'package:isar/isar.dart';
+import 'packets/publish_packet.dart';
 
 // how message storage can be implemented varies greatly with platform
 abstract class MqttMessageStorage {

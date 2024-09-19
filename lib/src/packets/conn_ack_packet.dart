@@ -1,5 +1,5 @@
-import 'package:cutie_mqtt/src/byte_utils.dart';
-import 'package:cutie_mqtt/src/mqtt_qos.dart';
+import '../byte_utils.dart';
+import '../mqtt_qos.dart';
 
 enum ConnectReasonCode {
   success,

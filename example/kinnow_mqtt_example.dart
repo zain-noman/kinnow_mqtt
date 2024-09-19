@@ -1,10 +1,8 @@
-import 'package:cutie_mqtt/cutie_mqtt.dart';
-import 'package:cutie_mqtt/src/mqtt_qos.dart';
-import 'package:cutie_mqtt/src/packets/subscribe_packet.dart';
+import 'package:kinnow_mqtt/kinnow_mqtt.dart';
 
 void main() async {
   final client =
-      CutieMqttClient(TcpMqttNetworkConnection("broker.hivemq.com", 1883));
+      KinnowMqttClient(TcpMqttNetworkConnection("broker.hivemq.com", 1883));
   final connPkt = ConnectPacket(
     cleanStart: true,
     lastWill: null,

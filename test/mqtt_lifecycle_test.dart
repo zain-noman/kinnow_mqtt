@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'package:cutie_mqtt/cutie_mqtt.dart';
-import 'package:cutie_mqtt/src/packets/disconnect_packet.dart';
-import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
-import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
+import 'package:kinnow_mqtt/kinnow_mqtt.dart';
+import 'package:kinnow_mqtt/src/mqtt_fixed_header.dart';
+import 'package:kinnow_mqtt/src/mqtt_packet_types.dart';
 import 'package:test/test.dart';
 
 class UnresponsiveNetworkConnection implements MqttNetworkConnection {
@@ -48,7 +47,7 @@ void main() {
         "unresponsive network",
         () async {
           final net = UnresponsiveNetworkConnection();
-          final c = CutieMqttClient(net);
+          final c = KinnowMqttClient(net);
           final eventStream = c.begin(ConnectPacket(
               cleanStart: false,
               lastWill: null,
@@ -78,7 +77,7 @@ void main() {
             },
           );
 
-          final c = CutieMqttClient(net);
+          final c = KinnowMqttClient(net);
           final eventStream = c.begin(ConnectPacket(
               cleanStart: false,
               lastWill: null,
@@ -119,7 +118,7 @@ void main() {
         "connection lifecycle pingTimeout",
         () async {
           final net = TestNetworkConnection();
-          final c = CutieMqttClient(net);
+          final c = KinnowMqttClient(net);
           final eventStream = c.begin(ConnectPacket(
               cleanStart: false,
               lastWill: null,
@@ -188,7 +187,7 @@ void main() {
         "disconnect during Network disconnected",
         () async {
           final net = TestNetworkConnection();
-          final c = CutieMqttClient(net);
+          final c = KinnowMqttClient(net);
           final eventStream = c.begin(ConnectPacket(
               cleanStart: false,
               lastWill: null,
@@ -216,7 +215,7 @@ void main() {
         "disconnect during Network connected",
         () async {
           final net = TestNetworkConnection();
-          final c = CutieMqttClient(net);
+          final c = KinnowMqttClient(net);
           final eventStream = c.begin(ConnectPacket(
               cleanStart: false,
               lastWill: null,

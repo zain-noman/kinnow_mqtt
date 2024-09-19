@@ -1,6 +1,6 @@
 import 'package:async/async.dart';
-import 'package:cutie_mqtt/src/byte_utils.dart';
-import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
+import 'byte_utils.dart';
+import 'mqtt_packet_types.dart';
 
 class MqttFixedHeader {
   final MqttPacketType packetType;

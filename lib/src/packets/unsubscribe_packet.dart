@@ -1,6 +1,6 @@
-import 'package:cutie_mqtt/src/byte_utils.dart';
-import 'package:cutie_mqtt/src/mqtt_fixed_header.dart';
-import 'package:cutie_mqtt/src/mqtt_packet_types.dart';
+import '../byte_utils.dart';
+import '../mqtt_fixed_header.dart';
+import '../mqtt_packet_types.dart';
 
 class UnsubscribePacket {
   final Map<String, String> userProperties;
