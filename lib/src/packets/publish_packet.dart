@@ -1,20 +1,50 @@
+import 'package:kinnow_mqtt/kinnow_mqtt.dart';
+
 import '../byte_utils.dart';
 import '../mqtt_fixed_header.dart';
 import '../mqtt_packet_types.dart';
 import '../mqtt_qos.dart';
 
-// user facing class
+/// A Publish packet sent from client to server
 class TxPublishPacket {
+  /// Whether to retain this message
+  ///
+  /// A single retained message can be stored by the server for a topic.
+  /// When another client subscribes to the topic later it will receive the
+  /// retained message
   final bool retain;
+
+  /// the topic to which the message will be sent
   final String topic;
+
+  /// the main body of the message
   final StringOrBytes payload;
 
+  /// optional format of the message
   final MqttFormatIndicator? payloadFormat;
+
+  /// can be used to inform others about how long the message is valid
+  ///
+  /// value is in seconds
   final int? messageExpiryInterval;
+
+  /// whether to use a topic alias
+  ///
+  /// if `true` the library will attempt to reduce the packet size by first informing
+  /// the server that a topic alias (a number) corresponds to this topic. Then in future
+  /// messages the topic will not be sent and the topic alias will be sent instead
   final bool useAlias;
+
+  /// a topic on which a response should be sent
   final String? responseTopic;
+
+  /// any binary data for correlating a message to its response
   final List<int>? correlationData;
+
+  /// custom properties
   final Map<String, String> userProperties;
+
+  /// optional string representing the content type
   final String? contentType;
 
   TxPublishPacket(
@@ -116,21 +146,52 @@ class InternalTxPublishPacket {
   }
 }
 
+/// A publish packet sent by the sever to the client
 class RxPublishPacket {
+  /// whether the message was retained. Also see [TopicSubscription.retainHandling]
   final bool retain;
+
+  /// the topic
+  ///
+  /// in case alias is used the library will replace the alias with the actual topic
   final String topic;
+
+  /// the message body
   final StringOrBytes payload;
+
+  /// Received QoS
+  ///
+  /// may differ from QoS with which the message was transmitted based on [TopicSubscription.maxQos]
   final MqttQos qos;
+
+  /// Whether the message is a duplicate.
   final bool isDuplicate;
+
+  /// The packet id used in QoS1 and QoS2 messages
   final int? packetId;
 
+  /// an optional format indicator
   final MqttFormatIndicator? payloadFormat;
+
+  /// tells for how long the message will remain valid in seconds
   final int? messageExpiryInterval;
+
+  /// weather a topic alias was used. see [TxPublishPacket.useAlias]
   final bool aliasUsed;
+
+  /// topic on which response should be sent
   final String? responseTopic;
+
+  /// any binary data to correlate a message and its response
   final List<int>? correlationData;
+
+  /// custom properties
   final Map<String, String> userProperties;
+
+  /// optional content type string
   final String? contentType;
+
+  /// Id of the subscription due to which this message was sent by server. see [SubscribePacket.subscriptionId]
   final int? subscriptionId;
 
   RxPublishPacket(

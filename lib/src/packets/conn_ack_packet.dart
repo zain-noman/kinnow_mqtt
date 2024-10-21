@@ -1,6 +1,7 @@
 import '../byte_utils.dart';
 import '../mqtt_qos.dart';
 
+/// The Reason codes that can be sent in the ConnAck packet according to the specification
 enum ConnectReasonCode {
   success,
   unspecifiedError,
@@ -26,26 +27,58 @@ enum ConnectReasonCode {
   connectionRateExceeded
 }
 
+/// A packet sent by the broker to thr client in response to a connection request
 class ConnAckPacket {
+  /// indicates if the broker had an existing session for the clientId
   final bool sessionPresent;
+  /// the reason code indicates if the connection was successful or not along with a reason
   final ConnectReasonCode connectReasonCode;
-
+  /// the server will delete the 'state' of the client after network disconnection plus this duration in seconds
   final int? sessionExpiryInterval;
+  /// the maximum number of in progress QoS1 and QoS2 messages that the broker can handle at a time
+  ///
+  /// the library does not currently use this value to limit the message rate
   final int? receiveMaximum;
+  /// the maximum QoS supported by the broker
+  ///
+  /// the library does not use this internally. the user should ensure that
+  /// he/she only uses QoS that is supported by the broker
   final MqttQos? maximumQOS;
+  /// whether the broker supports the retain functionality
   final bool? retainAvailable;
+  /// the maximum packet size that the broker will accept. if a larger message is sent, the broker will disconnect
+  ///
+  /// the library does not use this value internally.
   final int? maxPacketSize;
+  /// clientId assigned by the broker.
+  ///
+  /// This may be sent when an empty client id is sent by the client in connect
+  /// packet and the broker assigns a client id
   final String? assignedClientId;
+  /// the maximum number of topics aliases supported by broker
+  ///
+  /// the library does not use this value internally. user should ensure aliases
+  /// are supported by the broker and how many
   final int? topicAliasMaximum;
+  /// a human readable string sent by the broker for information
   final String? reasonString;
+  /// custom properties
   final Map<String, String> userProperties;
+  /// whether the broker supports wildcard subscriptions. if value is null then wildcard subscriptions are supported
   final bool? wildcardSubscriptionAvailable;
+  /// whether the broker supports subscription identifiers. if value is null then subscription identifiers are supported
   final bool? subscriptionIdentifiersAvailable;
+  /// whether the broker supports shared subscriptions. if value is null then shared subscriptions are supported
   final bool? sharedSubscriptionAvailable;
-  final int? serverKeepAlive;
+  /// keep alive time assigned by server
+  final int? serverKeepAlive;   // TODO: use this!! its required by spec
+  /// a string with information on how to create response topics. The format of this is not standardised
   final String? responseInformation;
+  /// provides information another server to use.
   final String? serverReference;
+  /// name of authentication method
   final String? authMethod;
+  /// binary data used for authentication
   final List<int>? authData;
 
   static const Map<int, ConnectReasonCode> _reasonCodeLookup = {

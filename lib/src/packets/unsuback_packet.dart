@@ -10,10 +10,22 @@ enum UnsubackReasonCode {
   packetIdentifierInUse,
 }
 
+/// Packet sent by server in reply to a [UnsubscribePacket]
 class UnsubackPacket {
+  /// the packet id used to identify which [UnsubscribePacket] this packet acknowledges
+  ///
+  /// this value is used internally to match an [UnsubackPacket] to a [UnsubscribePacket]
+  /// end users don't have any real use for this
   final int packetId;
+  /// Contains information of success or otherwise of each topic that was sent in the [UnsubscribePacket]
+  ///
+  /// The order of reasonCodes is the same as the order of [UnsubscribePacket.topicFilters]
   final List<UnsubackReasonCode> reasonCodes;
+
+  /// A human readable string with additional information
   String? reasonString;
+
+  /// custom properties
   Map<String, String> userProperties;
 
   UnsubackPacket(
@@ -29,6 +41,7 @@ class UnsubackPacket {
     0x91: UnsubackReasonCode.packetIdentifierInUse,
   };
 
+  /// Create a Unsuback Packet fromBytes. Used internally
   static UnsubackPacket? fromBytes(Iterable<int> bytes) {
     final packetIdParseRes = ByteUtils.parseTwoByte(bytes);
     if (packetIdParseRes == null) return null;

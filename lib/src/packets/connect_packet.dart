@@ -3,21 +3,44 @@ import '../mqtt_fixed_header.dart';
 import '../mqtt_packet_types.dart';
 import '../mqtt_qos.dart';
 
+/// The Last Will Properties
+///
+/// The last will message is a message sent  by the broker on behalf of the client
+/// after the client disconnects abruptly (without sending a disconnect packet)
+/// the details of this message can only be specified at the time of connection
+/// and cannot be altered later
 class ConnectPacketWillProperties {
+  /// The Quality Of Service to use
   final MqttQos qos;
+  /// Whether the last will message should be retained
   final bool retain;
+  /// The topic
   final String willTopic;
+  /// The message payload
   final StringOrBytes willPayload;
 
   //optional properties
+  /// duration in seconds after which the server will publish the last will message
+  ///
+  /// if the Session Expiry Interval is smaller than this value,
+  /// then Session Expiry Interval will be used instead
   final int? willDelayInterval;
+  /// whether the [willPayload] is binary data or string
   final MqttFormatIndicator? format;
+  /// the message expiry interval of the will message.
+  ///
+  /// this will be received by other clients as part of [RxPublishPacket.messageExpiryInterval]
   final int? expiryInterval;
+  /// see [TxPublishPacket.contentType]
   final String? contentType;
+  /// see [TxPublishPacket.responseTopic]
   final String? responseTopic;
+  /// see [TxPublishPacket.correlationData]
   final List<int>? correlationData;
+  /// see [TxPublishPacket.userProperties]
   final Map<String, String>? userProperties;
 
+  /// used internally. ignore
   List<int> propertiesBytes() {
     final props = <int>[];
     ByteUtils.appendOptionalFourByteProperty(willDelayInterval, 0x18, props);
@@ -36,6 +59,12 @@ class ConnectPacketWillProperties {
     return [...ByteUtils.makeVariableByteInteger(props.length), ...props];
   }
 
+  /// create a Will Message.
+  ///
+  /// [qos] : the quality of service of the last will message
+  /// [retain] : whether the last will message will be retained
+  /// [willTopic] : the topic
+  /// [willPayload] : the body of the last will message
   ConnectPacketWillProperties(
     this.qos,
     this.retain,
@@ -51,27 +80,59 @@ class ConnectPacketWillProperties {
   });
 }
 
+/// The connect packet sent to initiate connection
 class ConnectPacket {
+  /// the protocol version
+  ///
+  /// the default value is MQTT 5. the library may also be compatible with
+  /// future versions
   final int protocolVersion;
+  /// if 'false', any previous state stored by the server is discarded, otherwise it is used
   bool cleanStart;
+  /// the last will message properties, if null no last will message will be used
   final ConnectPacketWillProperties? lastWill;
+  /// ping messages will be exchanged after this duration to test connection
+  ///
+  /// this value is also used by the library as the interval between reconnection attempts.
+  /// The server may request a different keep alive value in [ConnAckPacket.serverKeepAlive].
+  /// In that case, the server's keep alive time will be used
   final int keepAliveSeconds;
-
-  //clientId
+  /// username for username + password based authentication
   final String? username;
+  /// password for username + password based authentication. Does not necessarily need to be a string
   final StringOrBytes? password;
 
   //optional properties
+  /// the server will delete the 'state' of the client this many seconds after network disconnection
   final int? sessionExpiryIntervalSeconds;
+  /// the maximum number of in progress QoS1 and QoS2 messages that the client can handle at a time
+  ///
+  /// the library does not currently use this value to limit the message rate
   final int? receiveMaximum;
+  /// messages larger than this size will not be forwarded by the broke to this client
   final int? maxRecvPacketSize;
+  /// the maximum number of topics aliases to be used
+  ///
+  /// the library does not have any limit on aliases but user can limit them if he wants
   final int? topicAliasMax;
+  /// if 'true' the server should send a [ConnAckPacket.responseInformation]
   final bool? requestResponseInformation;
+  /// whether the server will send reason strings on packets
   final bool? requestProblemInformation;
+  /// custom properties
   final Map<String, String>? userProperties;
+  /// name of authentication method
   final String? authMethod;
+  /// binary data used for authentication
   final List<int>? authData;
 
+  /// create a Connect packet
+  ///
+  /// [cleanStart] : the last will message properties, if null no last will message will be used
+  /// [lastWill] : the last will message properties, if null no last will message will be used
+  /// [keepAliveSeconds] : ping messages will be exchanged after this duration to test connection
+  /// [username] : username, can be set to null if not needed
+  /// [password] : password, can be set to null if not needed
   ConnectPacket({
     required this.cleanStart,
     required this.lastWill,
@@ -90,6 +151,7 @@ class ConnectPacket {
     this.authData,
   });
 
+  /// used internally. ignore
   List<int> toBytes(String clientId) {
     assert(keepAliveSeconds <= 0xFFFF);
 

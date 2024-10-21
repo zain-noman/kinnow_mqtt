@@ -1,11 +1,18 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+/// Provides parsed data along with remaining array
 class ParseResult<T> {
+  /// The parsed data
   final T data;
+
+  /// The remaining array excluding [data]
   final Iterable<int> nextBlockStart;
+
+  /// The number of bytes used in [data]
   final int bytesConsumed;
 
+  /// Create a [ParseResult]
   ParseResult({
     required this.data,
     required this.bytesConsumed,
@@ -13,24 +20,35 @@ class ParseResult<T> {
   });
 }
 
+/// A class for when data can be provided as either bytes or strings
+///
+/// To create an instance using a string, use [StringOrBytes.fromString].
+/// To create an instance using bytes, use [StringOrBytes.fromBytes].
+/// The conversion between string to bytes and vice versa is done using utf8
 class StringOrBytes {
   List<int>? _bytes;
   String? _string;
 
+  /// Create a StringOrBytes instance using a String [str]
   StringOrBytes.fromString(String str) {
     _string = str;
   }
 
+  /// Create a StringOrBytes instance using a List of bytes [bytes].
+  ///
+  /// Please ensure that [bytes] actually contains byte values between 0 and 255
   StringOrBytes.fromBytes(List<int> bytes) {
     _bytes = bytes;
   }
 
+  /// get the data as bytes regardless of how it was created
   List<int> get asBytes {
     if (_bytes != null) return _bytes!;
     _bytes = utf8.encode(_string!);
     return _bytes!;
   }
 
+  /// get the data as a [String] regardless of how it was created
   String get asString {
     if (_string != null) return _string!;
     _string = utf8.decode(_bytes!);

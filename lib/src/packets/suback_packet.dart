@@ -1,5 +1,6 @@
 import '../byte_utils.dart';
 
+/// success or failure reason for a topic subscription
 enum SubackReasonCode {
   grantedQoS0,
   grantedQoS1,
@@ -15,10 +16,20 @@ enum SubackReasonCode {
   wildcardSubscriptionsNotSupported,
 }
 
+/// Packet sent by server in response to a [SubscribePacket]
 class SubackPacket {
+  /// packet id used to match a [SubscribePacket] to a corresponding [SubackPacket]
+  ///
+  /// used internally. Irrelevant to end user
   final int packetId;
+
+  /// Contains information of success or otherwise of each topic that was sent in the [SubscribePacket]
+  ///
+  /// The order of reasonCodes is the same as the order of [SubscribePacket.topics]
   final List<SubackReasonCode> reasonCodes;
+  /// A human readable string for further information
   String? reasonString;
+  /// custom properties
   Map<String, String> userProperties;
 
   SubackPacket(

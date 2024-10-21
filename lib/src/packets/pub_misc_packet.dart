@@ -4,12 +4,18 @@ import '../mqtt_packet_types.dart';
 import '../byte_utils.dart';
 
 class PubCommonPacket<T> {
+  /// The packet Id used to match a packet with its response packet
   final int packetId;
+  /// the reason
   final T? reasonCode;
+  /// An optional human readable string for further information
   final String? reasonString;
+  /// custom properties
   final Map<String, String> userProperties;
 
+  /// used internally. ignore
   final Map<T, int> toByteLookup;
+  /// used internally. ignore
   final Map<int, T> fromByteLookup;
 
   PubCommonPacket(this.packetId, this.reasonCode, this.reasonString,
@@ -147,6 +153,7 @@ const _pubrelReasonCodeToByteLookup = {
   PubrelReasonCode.packetIdentifierNotFound: 0x92,
 };
 
+/// Packet sent in response to a QoS1 message
 class PubackPacket extends PubCommonPacket<PubackReasonCode> {
   PubackPacket(int packetId, PubackReasonCode? reasonCode, String? reasonString,
       Map<String, String> userProperties)
@@ -164,6 +171,7 @@ class PubackPacket extends PubCommonPacket<PubackReasonCode> {
   List<int> toBytes() => toBytesInternal(MqttPacketType.puback);
 }
 
+/// Packet sent in response to a QoS2 Publish message
 class PubrecPacket extends PubCommonPacket<PubackReasonCode> {
   PubrecPacket(int packetId, PubackReasonCode? reasonCode, String? reasonString,
       Map<String, String> userProperties)
@@ -181,6 +189,7 @@ class PubrecPacket extends PubCommonPacket<PubackReasonCode> {
   List<int> toBytes() => toBytesInternal(MqttPacketType.pubrec);
 }
 
+/// Sent in response to a [PubrecPacket] for Qos2 messages
 class PubrelPacket extends PubCommonPacket<PubrelReasonCode> {
   PubrelPacket(int packetId, PubrelReasonCode? reasonCode, String? reasonString,
       Map<String, String> userProperties)
@@ -198,6 +207,7 @@ class PubrelPacket extends PubCommonPacket<PubrelReasonCode> {
   List<int> toBytes() => toBytesInternal(MqttPacketType.pubrel);
 }
 
+/// Sent in response to a [PubrelPacket] for Qos2 messages
 class PubcompPacket extends PubCommonPacket<PubrelReasonCode> {
   PubcompPacket(int packetId, PubcompReasonCode? reasonCode,
       String? reasonString, Map<String, String> userProperties)

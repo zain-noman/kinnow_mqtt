@@ -2,10 +2,16 @@ import '../byte_utils.dart';
 import '../mqtt_fixed_header.dart';
 import '../mqtt_packet_types.dart';
 
+/// Packet sent by client to unsubscribe from one or more topics
 class UnsubscribePacket {
+  /// custom properties
   final Map<String, String> userProperties;
+  /// The topics to unsubscribe from
   final List<String> topicFilters;
 
+  /// Create unsubscribe packet
+  ///
+  /// [topicFilters] is a list of topics to unsubscribe from
   UnsubscribePacket(this.topicFilters,
       {this.userProperties = const <String, String>{}});
 }

@@ -1,23 +1,31 @@
 import 'dart:async';
 import 'dart:io';
 
+/// The base class for network connections that can be used for mqtt
 abstract class MqttNetworkConnection {
+  /// establish a connection
   Future<Stream<int>?> connect();
 
+  /// send data on the connection. Returns success or failure
   Future<bool> transmit(Iterable<int> bytes);
 }
 
+/// Mqtt Connection that uses simple TCP sockets without encryption
+///
+/// the host uri is commonly in the form `mqtt://broker.name.here.com`
 class TcpMqttNetworkConnection implements MqttNetworkConnection {
+  /// Ip address or uri of the mqtt broker
   final String host;
+  /// The port for socket connection. 1883 is commonly used
   final int port;
-  Socket? currentSocket;
+  Socket? _currentSocket;
 
   @override
   Future<Stream<int>?> connect() async {
     try {
       final socket = await Socket.connect(host, port);
       // socket.setOption(SocketOption.tcpNoDelay,true);
-      currentSocket = socket;
+      _currentSocket = socket;
       return socket.transform(StreamTransformer.fromHandlers(
         handleData: (data, sink) {
           for (final d in data) {
@@ -26,7 +34,7 @@ class TcpMqttNetworkConnection implements MqttNetworkConnection {
         },
         handleDone: (sink) {
           sink.close();
-          currentSocket = null;
+          _currentSocket = null;
         },
       ));
     } catch (e) {
@@ -36,23 +44,30 @@ class TcpMqttNetworkConnection implements MqttNetworkConnection {
 
   @override
   Future<bool> transmit(Iterable<int> bytes) async {
-    if (currentSocket == null) return false;
-    currentSocket?.add(bytes.toList());
+    if (_currentSocket == null) return false;
+    _currentSocket?.add(bytes.toList());
     return true;
   }
 
   TcpMqttNetworkConnection(this.host, this.port);
 }
 
+/// Mqtt Connection that uses TCP sockets with encryption using TLS/SSL
+///
+/// This is also commonly referred to as MQTTS
+/// the host uri is commonly in the form `mqtts://broker.name.here.com`
 class SslTcpMqttNetworkConnection implements MqttNetworkConnection{
-  SecureSocket? currentSocket;
+  SecureSocket? _currentSocket;
+  /// A function to create a [SecureSocket]
+  ///
+  /// eg. ```SecureSocket.connect("broker.address.com",8883)```
   final Future<SecureSocket> Function() secureSocketMaker;
 
   @override
   Future<Stream<int>?> connect() async {
     try {
       final socket = await secureSocketMaker();
-      currentSocket = socket;
+      _currentSocket = socket;
       return socket.transform(StreamTransformer.fromHandlers(
         handleData: (data, sink) {
           for (final d in data) {
@@ -61,7 +76,7 @@ class SslTcpMqttNetworkConnection implements MqttNetworkConnection{
         },
         handleDone: (sink) {
           sink.close();
-          currentSocket = null;
+          _currentSocket = null;
         },
       ));
     } catch (e) {
@@ -71,10 +86,21 @@ class SslTcpMqttNetworkConnection implements MqttNetworkConnection{
 
   @override
   Future<bool> transmit(Iterable<int> bytes) async {
-    if (currentSocket == null) return false;
-    currentSocket?.add(bytes.toList());
+    if (_currentSocket == null) return false;
+    _currentSocket?.add(bytes.toList());
     return true;
   }
 
+  /// Create a SSL TCP Network Connection Object
+  ///
+  /// [secureSocketMaker] is usually set in the following way
+  /// ```dart
+  /// SslTcpMqttNetworkConnection(
+  ///       () => SecureSocket.connect(
+  ///         "broker.address.com",
+  ///         8883,
+  ///       ),
+  ///     )
+  /// ```
   SslTcpMqttNetworkConnection(this.secureSocketMaker);
 }

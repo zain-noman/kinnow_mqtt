@@ -2,6 +2,7 @@ import '../byte_utils.dart';
 import '../mqtt_fixed_header.dart';
 import '../mqtt_packet_types.dart';
 
+/// The Disconnection Reason provided by the server or the client in the disconnect packet
 enum DisconnectReasonCode {
   normal,
   disconnectWithWill,
@@ -34,6 +35,7 @@ enum DisconnectReasonCode {
   wildcardSubscriptionsNotSupported,
 }
 
+/// A packet sent by the server or client to close the connection
 class DisconnectPacket {
   static const _byteToReasonCode = {
     0x00: DisconnectReasonCode.normal,
@@ -98,6 +100,7 @@ class DisconnectPacket {
     DisconnectReasonCode.wildcardSubscriptionsNotSupported: 0xA2,
   };
 
+  /// create a [DisconnectPacket] from bytes
   static DisconnectPacket? fromBytes(Iterable<int> data) {
     final reasonCode = _byteToReasonCode[data.elementAt(0)];
     if (reasonCode == null) return null;
@@ -143,12 +146,20 @@ class DisconnectPacket {
         userProperties: userProps);
   }
 
+  /// Cause of disconnection
   final DisconnectReasonCode reasonCode;
+  /// Time in seconds after which the server should delete the state of the client
+  ///
+  /// can only sent by client
   final int? sessionExpiryInterval;
+  /// A human readable string to provide extra information
   final String? reasonString;
+  /// custom properties
   final Map<String, String> userProperties;
+  /// sent by server to inform client of some other server to use
   final String? serverReference;
 
+ /// create a disconnect packet
   const DisconnectPacket(
     this.reasonCode, {
     this.sessionExpiryInterval,
@@ -157,6 +168,7 @@ class DisconnectPacket {
     this.serverReference,
   });
 
+  /// convert to byte representation
   List<int> toBytes() {
     final props = <int>[];
     ByteUtils.appendOptionalFourByteProperty(

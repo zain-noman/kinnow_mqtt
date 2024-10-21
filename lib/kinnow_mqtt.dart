@@ -1,3 +1,4 @@
+/// The main mqtt library
 library kinnow_mqtt;
 
 export 'src/packets/conn_ack_packet.dart';

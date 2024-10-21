@@ -66,8 +66,19 @@ class MqttActiveConnectionState implements TopicAliasManager {
   }
 }
 
+/// The main Mqtt Client class
 class KinnowMqttClient {
+  /// The underlying network connection
+  ///
+  /// Can be a [TcpMqttNetworkConnection] or a [SslTcpMqttNetworkConnection] or
+  /// websocket or any class that implements [MqttNetworkConnection].
   final MqttNetworkConnection networkConnection;
+  /// A unique identifier of the client.
+  ///
+  /// Please ensure using unique clientIds on different devices. If the same clientId
+  /// is used, disconnections may occur.
+  /// The [clientId] can be set in the constructor or at a later time before calling [begin].
+  /// Any changes after [begin] will not take effect
   late String clientId;
   final StreamController<MqttEvent> _eventController =
       StreamController<MqttEvent>.broadcast();
@@ -77,10 +88,15 @@ class KinnowMqttClient {
 
   final _operationQueue = MqttOperationQueue<MqttActiveConnectionState>();
 
+  /// This stream provides information on whether the client is connected
+  ///
+  /// A 'true' value indicates that the client is connected and a 'false' indicates
+  /// disconnection. This is a broadcast stream and can be listened to multiple times
   Stream<bool> get connectionStatusStream => _connectionStatusController.stream;
 
   MqttActiveConnectionState? _activeConnectionState;
 
+  /// whether the client is currently connected
   bool get isConnected => _activeConnectionState != null;
 
   bool _disconnectFlag = false;
@@ -90,12 +106,20 @@ class KinnowMqttClient {
 
   final _rxPacketController = StreamController<RxPublishPacket>.broadcast();
 
+  /// This stream provides the publish packets sent by the server
+  ///
+  /// This is a broadcast stream and can be listened to multiple times
   Stream<RxPublishPacket> get receivedMessagesStream =>
       _rxPacketController.stream;
 
+  /// Create a new Mqtt Client
+  ///
+  /// [networkConnection] : The underlying tcp/tls/websocket connection. see [MqttNetworkConnection]
+  /// [initClientId] : The client Id to use, if not specified a client id is generated based on current time.
+  /// The [clientId] can also be set at a later time before calling [begin]. Any changes after [begin] will not take effect
   KinnowMqttClient(this.networkConnection, {String? initClientId}) {
     clientId =
-        initClientId ?? "cutie_mqtt_${DateTime.now().millisecondsSinceEpoch}";
+        initClientId ?? "kinnow_mqtt_${DateTime.now().millisecondsSinceEpoch}";
     _disconnectFlagStream.onListen = () {
       if (_disconnectFlag == true) {
         _disconnectFlagStream.add(true);
@@ -103,6 +127,8 @@ class KinnowMqttClient {
     };
   }
 
+  // TODO: ensure this isn't called twice
+  /// Start the mqtt connection. return the stream of events. This should not be called twice
   Stream<MqttEvent> begin(ConnectPacket connPkt) {
     _eventController.onListen = () {
       _internalLoop(connPkt);
@@ -355,6 +381,13 @@ class KinnowMqttClient {
     return false;
   }
 
+  /// Publish a Message with QoS 0.
+  ///
+  /// This function will wait until there is a
+  /// network connection and then send the message. QoS 0 messages are not acknowledged
+  /// by the server so these is a slight chance that QoS 0 messages are not received. 
+  /// returns a future that completes with 'true' if the message was transmitted and 
+  /// completes with false if the client shuts down before the message could be sent
   Future<bool> publishQos0(TxPublishPacket pubPkt) {
     final token = _operationQueue.generateToken();
     return _operationQueue.addToQueueAndExecute(
@@ -369,15 +402,22 @@ class KinnowMqttClient {
 
   int _packetIdGenerator = 0;
 
-  int generatePacketId() {
+  int _generatePacketId() {
     _packetIdGenerator++;
     return _packetIdGenerator;
   }
 
+  /// Publish a Message with QoS 1.
+  ///
+  /// QoS 1 messages are acknowledged
+  /// by the server so QoS 1 messages are received at least once but may be received
+  /// more than once. Returns a future that completes with the [PubackPacket] sent
+  /// by the server if the message was transmitted and completes with null if the
+  /// client shuts down before the message could be sent
   Future<PubackPacket?> publishQos1(TxPublishPacket pubPkt) async {
     bool isDuplicate = false;
     final token = _operationQueue.generateToken();
-    final packetId = generatePacketId();
+    final packetId = _generatePacketId();
     while (true) {
       final sent = await _operationQueue.addToQueueAndExecute(
         token,
@@ -406,11 +446,17 @@ class KinnowMqttClient {
     }
   }
 
+  /// Publish a Message with QoS 2.
+  ///
+  /// QoS 2 messages are received exactly once but have
+  /// more overhead. returns a future that completes with the [PubrecPacket] and
+  /// the [PubcompPacket] sent by the server if the message was transmitted and
+  /// completes with null if the client shuts down before the message could be sent
   Future<(PubrecPacket, PubcompPacket)?> publishQos2(
       TxPublishPacket pubPkt) async {
     bool isDuplicate = false;
     final token = _operationQueue.generateToken();
-    final packetId = generatePacketId();
+    final packetId = _generatePacketId();
 
     PubrecPacket? pubRec;
     while (true) {
@@ -468,10 +514,15 @@ class KinnowMqttClient {
     return (pubRec, pubComp);
   }
 
-  Future<SubackPacket?> subscribe(SubscribePacket sub_pkt) async {
+  /// Subscribe to a topic.
+  ///
+  /// Returns a Future that completes with a [SubackPacket] if the subscription
+  /// is successful and null if the client shuts down before subscription completes.
+  /// After subscription messages can be received on [receivedMessagesStream]
+  Future<SubackPacket?> subscribe(SubscribePacket subPkt) async {
     final token = _operationQueue.generateToken();
-    final packetId = generatePacketId();
-    final pktBytes = InternalSubscribePacket(packetId, sub_pkt).toBytes();
+    final packetId = _generatePacketId();
+    final pktBytes = InternalSubscribePacket(packetId, subPkt).toBytes();
     while (true) {
       final sent = await _operationQueue.addToQueueAndExecute(
         token,
@@ -495,10 +546,14 @@ class KinnowMqttClient {
     }
   }
 
-  Future<UnsubackPacket?> unsubscribe(UnsubscribePacket unsub_pkt) async {
+  /// Unsubscribe from a topic.
+  ///
+  /// Returns a Future that completes with a [UnsubackPacket] if the subscription
+  /// is successful and null if the client shuts down before the unsubscribe completes
+  Future<UnsubackPacket?> unsubscribe(UnsubscribePacket unSubPkt) async {
     final token = _operationQueue.generateToken();
-    final packetId = generatePacketId();
-    final pktBytes = InternalUnsubscribePacket(packetId, unsub_pkt).toBytes();
+    final packetId = _generatePacketId();
+    final pktBytes = InternalUnsubscribePacket(packetId, unSubPkt).toBytes();
     while (true) {
       final sent = await _operationQueue.addToQueueAndExecute(
         token,
@@ -522,6 +577,10 @@ class KinnowMqttClient {
     }
   }
 
+  /// Disconnect from the server
+  ///
+  /// If the client is not connected when [disconnect] is called, the client
+  /// will disconnect without sending the [disconnectPkt].
   void disconnect(
       {DisconnectPacket disconnectPkt =
           const DisconnectPacket(DisconnectReasonCode.normal)}) {
