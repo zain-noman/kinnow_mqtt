@@ -1,5 +1,4 @@
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
-import 'package:kinnow_mqtt/src/mqtt_qos.dart';
 import 'package:kinnow_mqtt/src/packets/publish_packet.dart';
 
 import 'package:test/test.dart';
