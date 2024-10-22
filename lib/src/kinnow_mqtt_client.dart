@@ -136,6 +136,8 @@ class KinnowMqttClient {
   bool _begun = false;
 
   /// Start the mqtt connection. return the stream of events. This should not be called twice
+  ///
+  /// The MQTT connection will actually start when the user listens to the returned stream
   Stream<MqttEvent> begin(ConnectPacket connPkt) {
     if (_begun) {
       throw StateError("Client is already started");
@@ -222,6 +224,7 @@ class KinnowMqttClient {
     while (true) {
       final (exit, streamQ) = await _connect(connPkt);
 
+      // connection failed
       if (streamQ == null) {
         if (exit) {
           // connection failed but we shouldn't retry
