@@ -16,36 +16,20 @@ void main() async {
   );
   await client.publishQos0(TxPublishPacket(
     false,
-    "zainTestTopic",
-    StringOrBytes.fromString(
-        "joe mama so fat, she wouldn't fit in the mqtt size limit"),
+    "kinnowTestTopic",
+    StringOrBytes.fromString("A QoS 0 message"),
   ));
 
   final puback = await client.publishQos1(TxPublishPacket(
-      false,
-      "zainTestTopic",
-      StringOrBytes.fromString(
-          "joe mama so old, she still using mqtt v3.1.1")));
+      false, "kinnowTestTopic", StringOrBytes.fromString("A QoS1 message")));
 
   if (puback != null) {
     print("puback received");
   }
 
-  /*
-  final qos2res = await client.publishQos2(TxPublishPacket(
-      false,
-      "zainTestTopic",
-      StringOrBytes.fromString(
-          "joe mama so dumb, her mqtt client needs to be connected to send messages")));
-
-  if (qos2res != null) {
-    print("pubrec and pubcomp received");
-  }
-   */
-
   final suback = await client.subscribe(SubscribePacket([
-    TopicSubscription("likeShareAndSubscribe", MqttQos.atMostOnce),
-    TopicSubscription("MistOrBeast", MqttQos.atLeastOnce),
+    TopicSubscription("SubscribeTopic1", MqttQos.atMostOnce),
+    TopicSubscription("SubscribeTopic2", MqttQos.atLeastOnce),
   ]));
   if (suback != null) {
     print("suback received");
