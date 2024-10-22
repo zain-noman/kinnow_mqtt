@@ -12,10 +12,13 @@ import '../mqtt_qos.dart';
 class ConnectPacketWillProperties {
   /// The Quality Of Service to use
   final MqttQos qos;
+
   /// Whether the last will message should be retained
   final bool retain;
+
   /// The topic
   final String willTopic;
+
   /// The message payload
   final StringOrBytes willPayload;
 
@@ -25,18 +28,24 @@ class ConnectPacketWillProperties {
   /// if the Session Expiry Interval is smaller than this value,
   /// then Session Expiry Interval will be used instead
   final int? willDelayInterval;
+
   /// whether the [willPayload] is binary data or string
   final MqttFormatIndicator? format;
+
   /// the message expiry interval of the will message.
   ///
   /// this will be received by other clients as part of [RxPublishPacket.messageExpiryInterval]
   final int? expiryInterval;
+
   /// see [TxPublishPacket.contentType]
   final String? contentType;
+
   /// see [TxPublishPacket.responseTopic]
   final String? responseTopic;
+
   /// see [TxPublishPacket.correlationData]
   final List<int>? correlationData;
+
   /// see [TxPublishPacket.userProperties]
   final Map<String, String>? userProperties;
 
@@ -87,42 +96,54 @@ class ConnectPacket {
   /// the default value is MQTT 5. the library may also be compatible with
   /// future versions
   final int protocolVersion;
+
   /// if 'false', any previous state stored by the server is discarded, otherwise it is used
   bool cleanStart;
+
   /// the last will message properties, if null no last will message will be used
   final ConnectPacketWillProperties? lastWill;
+
   /// ping messages will be exchanged after this duration to test connection
   ///
-  /// this value is also used by the library as the interval between reconnection attempts.
   /// The server may request a different keep alive value in [ConnAckPacket.serverKeepAlive].
   /// In that case, the server's keep alive time will be used
   final int keepAliveSeconds;
+
   /// username for username + password based authentication
   final String? username;
+
   /// password for username + password based authentication. Does not necessarily need to be a string
   final StringOrBytes? password;
 
   //optional properties
   /// the server will delete the 'state' of the client this many seconds after network disconnection
   final int? sessionExpiryIntervalSeconds;
+
   /// the maximum number of in progress QoS1 and QoS2 messages that the client can handle at a time
   ///
   /// the library does not currently use this value to limit the message rate
   final int? receiveMaximum;
+
   /// messages larger than this size will not be forwarded by the broke to this client
   final int? maxRecvPacketSize;
+
   /// the maximum number of topics aliases to be used
   ///
   /// the library does not have any limit on aliases but user can limit them if he wants
   final int? topicAliasMax;
+
   /// if 'true' the server should send a [ConnAckPacket.responseInformation]
   final bool? requestResponseInformation;
+
   /// whether the server will send reason strings on packets
   final bool? requestProblemInformation;
+
   /// custom properties
   final Map<String, String>? userProperties;
+
   /// name of authentication method
   final String? authMethod;
+
   /// binary data used for authentication
   final List<int>? authData;
 

@@ -68,11 +68,15 @@ class MqttActiveConnectionState implements TopicAliasManager {
 
 /// The main Mqtt Client class
 class KinnowMqttClient {
+  /// the duration between reconnection attempts
+  Duration reconnectDelay;
+
   /// The underlying network connection
   ///
   /// Can be a [TcpMqttNetworkConnection] or a [SslTcpMqttNetworkConnection] or
   /// websocket or any class that implements [MqttNetworkConnection].
   final MqttNetworkConnection networkConnection;
+
   /// A unique identifier of the client.
   ///
   /// Please ensure using unique clientIds on different devices. If the same clientId
@@ -117,7 +121,9 @@ class KinnowMqttClient {
   /// [networkConnection] : The underlying tcp/tls/websocket connection. see [MqttNetworkConnection]
   /// [initClientId] : The client Id to use, if not specified a client id is generated based on current time.
   /// The [clientId] can also be set at a later time before calling [begin]. Any changes after [begin] will not take effect
-  KinnowMqttClient(this.networkConnection, {String? initClientId}) {
+  KinnowMqttClient(this.networkConnection,
+      {String? initClientId,
+      this.reconnectDelay = const Duration(seconds: 10)}) {
     clientId =
         initClientId ?? "kinnow_mqtt_${DateTime.now().millisecondsSinceEpoch}";
     _disconnectFlagStream.onListen = () {
@@ -127,9 +133,14 @@ class KinnowMqttClient {
     };
   }
 
-  // TODO: ensure this isn't called twice
+  bool _begun = false;
+
   /// Start the mqtt connection. return the stream of events. This should not be called twice
   Stream<MqttEvent> begin(ConnectPacket connPkt) {
+    if (_begun) {
+      throw StateError("Client is already started");
+    }
+    _begun = true;
     _eventController.onListen = () {
       _internalLoop(connPkt);
     };
@@ -219,7 +230,7 @@ class KinnowMqttClient {
           break;
         } else {
           await Future.any([
-            Future.delayed(Duration(seconds: connPkt.keepAliveSeconds)),
+            Future.delayed(reconnectDelay),
             _disconnectFlagStream.stream.first
           ]);
           if (_disconnectFlag) {
@@ -385,8 +396,8 @@ class KinnowMqttClient {
   ///
   /// This function will wait until there is a
   /// network connection and then send the message. QoS 0 messages are not acknowledged
-  /// by the server so these is a slight chance that QoS 0 messages are not received. 
-  /// returns a future that completes with 'true' if the message was transmitted and 
+  /// by the server so these is a slight chance that QoS 0 messages are not received.
+  /// returns a future that completes with 'true' if the message was transmitted and
   /// completes with false if the client shuts down before the message could be sent
   Future<bool> publishQos0(TxPublishPacket pubPkt) {
     final token = _operationQueue.generateToken();
