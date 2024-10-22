@@ -85,7 +85,8 @@ class ConnAckPacket {
   final bool? sharedSubscriptionAvailable;
 
   /// keep alive time assigned by server
-  final int? serverKeepAlive; // TODO: use this!! its required by spec
+  final int? serverKeepAlive;
+
   /// a string with information on how to create response topics. The format of this is not standardised
   final String? responseInformation;
 

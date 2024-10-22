@@ -150,8 +150,12 @@ class KinnowMqttClient {
     return _eventController.stream;
   }
 
+  Duration _keepAliveDuration = const Duration(seconds: 60);
+
   Future<(bool exit, StreamQueue<int>? streamQ)> _connect(
       ConnectPacket connPkt) async {
+    _keepAliveDuration = Duration(seconds: connPkt.keepAliveSeconds);
+
     final byteStream = await networkConnection.connect();
     if (byteStream == null) {
       _eventController.add(NetworkConnectionFailure());
@@ -214,6 +218,10 @@ class KinnowMqttClient {
       return (true, null);
     }
     _eventController.add(ConnAckEvent(connAck));
+    if (connAck.serverKeepAlive != null) {
+      _keepAliveDuration = Duration(seconds: connAck.serverKeepAlive!);
+    }
+
     if (connAck.connectReasonCode != ConnectReasonCode.success) {
       return (true, null);
     }
@@ -249,7 +257,7 @@ class KinnowMqttClient {
 
       _activeConnectionState = MqttActiveConnectionState(
         ResettablePeriodicTimer(
-          time: Duration(seconds: connPkt.keepAliveSeconds),
+          time: _keepAliveDuration,
           callback: _sendPingReq,
         ),
         streamQ,

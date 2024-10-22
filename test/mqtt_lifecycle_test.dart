@@ -118,7 +118,8 @@ void main() {
         "connection lifecycle pingTimeout",
         () async {
           final net = TestNetworkConnection();
-          final c = KinnowMqttClient(net);
+          final c =
+              KinnowMqttClient(net, reconnectDelay: const Duration(seconds: 5));
           final eventStream = c.begin(ConnectPacket(
               cleanStart: false,
               lastWill: null,
