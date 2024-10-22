@@ -44,8 +44,7 @@ void main() {
     final connack = (await eventStream
         .firstWhere((element) => element is ConnAckEvent)) as ConnAckEvent;
     expect(connack, isNotNull);
-    expect(connack.connAck.connectReasonCode,
-        ConnectReasonCode.notAuthorized);
+    expect(connack.connAck.connectReasonCode, ConnectReasonCode.notAuthorized);
     await Future.delayed(const Duration(seconds: 2));
     expect(eventList.last, isA<ShutDown>());
   });

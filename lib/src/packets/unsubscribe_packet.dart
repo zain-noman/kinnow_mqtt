@@ -6,6 +6,7 @@ import '../mqtt_packet_types.dart';
 class UnsubscribePacket {
   /// custom properties
   final Map<String, String> userProperties;
+
   /// The topics to unsubscribe from
   final List<String> topicFilters;
 

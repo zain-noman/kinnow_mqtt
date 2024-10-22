@@ -27,8 +27,10 @@ class SubackPacket {
   ///
   /// The order of reasonCodes is the same as the order of [SubscribePacket.topics]
   final List<SubackReasonCode> reasonCodes;
+
   /// A human readable string for further information
   String? reasonString;
+
   /// custom properties
   Map<String, String> userProperties;
 

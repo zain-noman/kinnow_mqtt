@@ -148,18 +148,22 @@ class DisconnectPacket {
 
   /// Cause of disconnection
   final DisconnectReasonCode reasonCode;
+
   /// Time in seconds after which the server should delete the state of the client
   ///
   /// can only sent by client
   final int? sessionExpiryInterval;
+
   /// A human readable string to provide extra information
   final String? reasonString;
+
   /// custom properties
   final Map<String, String> userProperties;
+
   /// sent by server to inform client of some other server to use
   final String? serverReference;
 
- /// create a disconnect packet
+  /// create a disconnect packet
   const DisconnectPacket(
     this.reasonCode, {
     this.sessionExpiryInterval,

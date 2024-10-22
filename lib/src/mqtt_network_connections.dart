@@ -16,6 +16,7 @@ abstract class MqttNetworkConnection {
 class TcpMqttNetworkConnection implements MqttNetworkConnection {
   /// Ip address or uri of the mqtt broker
   final String host;
+
   /// The port for socket connection. 1883 is commonly used
   final int port;
   Socket? _currentSocket;
@@ -56,8 +57,9 @@ class TcpMqttNetworkConnection implements MqttNetworkConnection {
 ///
 /// This is also commonly referred to as MQTTS
 /// the host uri is commonly in the form `mqtts://broker.name.here.com`
-class SslTcpMqttNetworkConnection implements MqttNetworkConnection{
+class SslTcpMqttNetworkConnection implements MqttNetworkConnection {
   SecureSocket? _currentSocket;
+
   /// A function to create a [SecureSocket]
   ///
   /// eg. ```SecureSocket.connect("broker.address.com",8883)```

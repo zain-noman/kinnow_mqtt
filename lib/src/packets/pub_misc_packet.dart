@@ -6,15 +6,19 @@ import '../byte_utils.dart';
 class PubCommonPacket<T> {
   /// The packet Id used to match a packet with its response packet
   final int packetId;
+
   /// the reason
   final T? reasonCode;
+
   /// An optional human readable string for further information
   final String? reasonString;
+
   /// custom properties
   final Map<String, String> userProperties;
 
   /// used internally. ignore
   final Map<T, int> toByteLookup;
+
   /// used internally. ignore
   final Map<int, T> fromByteLookup;
 

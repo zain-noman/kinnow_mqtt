@@ -1,3 +1,5 @@
+import 'package:kinnow_mqtt/kinnow_mqtt.dart';
+
 import 'packets/conn_ack_packet.dart';
 import 'packets/disconnect_packet.dart';
 
@@ -21,7 +23,7 @@ sealed class MqttEvent {}
 
 /// The event when a socket/SSL-socket/websocket connection attempt failed
 ///
-/// The library automatically retries connection after the keep alive interval in this case
+/// The library automatically retries connection after [KinnowMqttClient.retryInterval] in this case
 class NetworkConnectionFailure extends MqttEvent {}
 
 /// The event when an established network connection becomes disconnected after successful connecting
@@ -31,6 +33,7 @@ class NetworkEnded extends MqttEvent {}
 class MalformedPacket extends MqttEvent {
   /// the bytes of the received packet
   final List<int>? packetBytes;
+
   /// additional information about why the packet was considered malformed
   final String? message;
 
@@ -78,12 +81,16 @@ class ConnackTimedOut extends MqttEvent {}
 enum ShutdownType {
   /// the client disconnected from the broker intentionally on the user's request and the disconnect packet was sent
   clientInitiated,
+
   /// the client disconnected from the broker after automatically after receiving a malformed packet
   clientInitiatedMalformedPacket,
+
   /// the server sent a disconnect packet to the client
   serverInitiated,
+
   /// the connection could not be made and retrying is not an option. eg broker does not support MQTT5
   connectionNotPossible,
+
   /// the client disconnected from the broker intentionally on the user's request but the disconnect packet was NOT sent due to disconnection
   clientInitiatedNetworkUnavailable,
 }

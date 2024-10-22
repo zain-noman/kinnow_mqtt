@@ -7,8 +7,10 @@ import '../mqtt_qos.dart';
 enum RetainHandlingOption {
   /// send the retained messages even if this is the second time subscribing to the topic
   sendRetainedOnEachMatchSub,
+
   /// do not send retained messages if the topic was subscribed earlier
   sendRetainedOnFirstMatchSub,
+
   /// do Not Send Retained Messages
   doNotSendRetainedMessages
 }
@@ -17,15 +19,19 @@ enum RetainHandlingOption {
 class TopicSubscription {
   /// the topic of the subscription
   final String topic;
+
   /// if set to QoS1 or QoS 0, the server will downgrade any higher QoS messages
   /// to the QoS set here
   final MqttQos maxQos;
+
   /// if set to `true` messages sent by the user will not be looped back
   final bool noLocal;
+
   /// if set to `true` all retained messages will have the [RxPublishPacket.retain]
   /// flag set to true, if `false` only the message that was retained
   /// before subscription will have the retain flag set
   final bool retainAsPublished;
+
   /// whether to receive retained messages
   final RetainHandlingOption retainHandling;
 
@@ -43,8 +49,10 @@ class TopicSubscription {
 class SubscribePacket {
   /// custom properties
   final Map<String, String> userProperties;
+
   /// the topics along with properties for subscription
   final Iterable<TopicSubscription> topics;
+
   /// If set, messages received due to this subscription will have
   /// [RxPublishPacket.subscriptionId] set to the same id
   final int? subscriptionId;

@@ -17,6 +17,7 @@ class UnsubackPacket {
   /// this value is used internally to match an [UnsubackPacket] to a [UnsubscribePacket]
   /// end users don't have any real use for this
   final int packetId;
+
   /// Contains information of success or otherwise of each topic that was sent in the [UnsubscribePacket]
   ///
   /// The order of reasonCodes is the same as the order of [UnsubscribePacket.topicFilters]

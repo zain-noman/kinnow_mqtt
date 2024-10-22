@@ -32,7 +32,6 @@ void main() {
     expect(connack.connAck.connectReasonCode, ConnectReasonCode.success);
   });
 
-
   // test("Successful local TlS Connection", () async {
   //   final client = KinnowMqttClient(SslTcpMqttNetworkConnection(
   //     () => SecureSocket.connect(
