@@ -1,5 +1,3 @@
-import 'package:kinnow_mqtt/kinnow_mqtt.dart';
-
 import '../byte_utils.dart';
 import '../mqtt_fixed_header.dart';
 import '../mqtt_packet_types.dart';

@@ -1,5 +1,3 @@
-import 'package:kinnow_mqtt/kinnow_mqtt.dart';
-
 import 'packets/conn_ack_packet.dart';
 import 'packets/disconnect_packet.dart';
 
