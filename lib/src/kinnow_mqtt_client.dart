@@ -298,8 +298,8 @@ class KinnowMqttClient {
   Future<bool> _useActiveNetworkConnection() async {
     assert(_activeConnectionState != null);
     while (true) {
-      final fixedHeaderBytes = await Future.any([
-        _activeConnectionState!.streamQ.take(2),
+      final fixedHeaderRes = await Future.any([
+        MqttFixedHeader.fromStreamQueue(_activeConnectionState!.streamQ),
         _activeConnectionState!.pingRespTimeoutCompleter.future,
         _disconnectFlagStream.stream.first.then(
           (value) => null,
@@ -311,21 +311,20 @@ class KinnowMqttClient {
         break;
       }
       // ping response not received
-      if (fixedHeaderBytes == null) {
+      if (_activeConnectionState!.pingRespTimeoutCompleter.isCompleted) {
         return true;
       }
 
+      final (fixedHdr, streamEnded, malformedBytes) = fixedHeaderRes!;
       // connection closed
-      if (fixedHeaderBytes.length != 2) {
+      if (streamEnded) {
         return true;
       }
-      final fixedHeaderParse = MqttFixedHeader.fromBytes(fixedHeaderBytes);
-      if (fixedHeaderParse == null) {
+      if (fixedHdr == null) {
         return true;
       }
       final packetBytes = await Future.any([
-        _activeConnectionState!.streamQ
-            .take(fixedHeaderParse.data.remainingLength),
+        _activeConnectionState!.streamQ.take(fixedHdr.remainingLength),
         _activeConnectionState!.pingRespTimeoutCompleter.future,
         _disconnectFlagStream.stream.first.then(
           (value) => null,
@@ -339,13 +338,13 @@ class KinnowMqttClient {
       //ping response timeout
       if (packetBytes == null) return true;
 
-      if (packetBytes.length != fixedHeaderParse.data.remainingLength) {
+      if (packetBytes.length != fixedHdr.remainingLength) {
         return true;
       }
-      switch (fixedHeaderParse.data.packetType) {
+      switch (fixedHdr.packetType) {
         case MqttPacketType.publish:
-          final (rxPub, aliasIssue) = RxPublishPacket.fromBytes(packetBytes,
-              fixedHeaderParse.data.flags, _activeConnectionState!);
+          final (rxPub, aliasIssue) = RxPublishPacket.fromBytes(
+              packetBytes, fixedHdr.flags, _activeConnectionState!);
           if (rxPub == null) {
             // TODO: Handle malformed packet and alias issue
             break;
@@ -647,6 +646,14 @@ class KinnowMqttClient {
           return;
         }
         _qos2MessagesAwaitingRelease[rxPub.packetId!] = rxPub;
+        final token = _operationQueue.generateToken();
+        unawaited(_operationQueue.addToQueueAndExecute(
+          token,
+          (state) async {
+            networkConnection.transmit(
+                PubrecPacket(rxPub.packetId!, null, null, const {}).toBytes());
+          },
+        ));
     }
   }
 

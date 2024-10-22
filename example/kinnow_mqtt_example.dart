@@ -1,8 +1,8 @@
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
 
 void main() async {
-  final client = KinnowMqttClient(
-      TcpMqttNetworkConnection("your.brokers.address.here.com", 1883));
+  final client =
+      KinnowMqttClient(TcpMqttNetworkConnection("your.brokers.address.here.com", 1883));
   final connPkt = ConnectPacket(
     cleanStart: true,
     lastWill: null,
@@ -35,8 +35,9 @@ void main() async {
   }
 
   final suback = await client.subscribe(SubscribePacket([
-    TopicSubscription("SubscribeTopic1", MqttQos.atMostOnce),
-    TopicSubscription("SubscribeTopic2", MqttQos.atLeastOnce),
+    TopicSubscription("KinnowSubTopic1", MqttQos.atMostOnce),
+    TopicSubscription("KinnowSubTopic2", MqttQos.atLeastOnce),
+    TopicSubscription("KinnowSubTopic3", MqttQos.exactlyOnce),
   ]));
   if (suback != null) {
     print("suback received");

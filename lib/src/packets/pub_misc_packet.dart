@@ -84,7 +84,7 @@ class PubCommonPacket<T> {
         toByteLookup, fromByteLookup);
   }
 
-  List<int> toBytesInternal(MqttPacketType type,int flags) {
+  List<int> toBytesInternal(MqttPacketType type, int flags) {
     final props = <int>[];
     if (reasonString != null) {
       props.add(0x1F);
@@ -172,7 +172,7 @@ class PubackPacket extends PubCommonPacket<PubackReasonCode> {
         res.packetId, res.reasonCode, res.reasonString, res.userProperties);
   }
 
-  List<int> toBytes() => toBytesInternal(MqttPacketType.puback,0);
+  List<int> toBytes() => toBytesInternal(MqttPacketType.puback, 0);
 }
 
 /// Packet sent in response to a QoS2 Publish message
@@ -190,7 +190,7 @@ class PubrecPacket extends PubCommonPacket<PubackReasonCode> {
         res.packetId, res.reasonCode, res.reasonString, res.userProperties);
   }
 
-  List<int> toBytes() => toBytesInternal(MqttPacketType.pubrec,0);
+  List<int> toBytes() => toBytesInternal(MqttPacketType.pubrec, 0);
 }
 
 /// Sent in response to a [PubrecPacket] for Qos2 messages
@@ -208,7 +208,7 @@ class PubrelPacket extends PubCommonPacket<PubrelReasonCode> {
         res.packetId, res.reasonCode, res.reasonString, res.userProperties);
   }
 
-  List<int> toBytes() => toBytesInternal(MqttPacketType.pubrel,0x02);
+  List<int> toBytes() => toBytesInternal(MqttPacketType.pubrel, 0x02);
 }
 
 /// Sent in response to a [PubrelPacket] for Qos2 messages
@@ -226,5 +226,5 @@ class PubcompPacket extends PubCommonPacket<PubrelReasonCode> {
         res.packetId, res.reasonCode, res.reasonString, res.userProperties);
   }
 
-  List<int> toBytes() => toBytesInternal(MqttPacketType.pubcomp,0);
+  List<int> toBytes() => toBytesInternal(MqttPacketType.pubcomp, 0);
 }
