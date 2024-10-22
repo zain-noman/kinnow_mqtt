@@ -27,6 +27,13 @@ void main() async {
     print("puback received");
   }
 
+  final qos2res = await client.publishQos2(TxPublishPacket(
+      false, "kinnowTestTopic", StringOrBytes.fromString("A QoS2 message")));
+
+  if (qos2res != null) {
+    print("pubrec and pubcomp received");
+  }
+
   final suback = await client.subscribe(SubscribePacket([
     TopicSubscription("SubscribeTopic1", MqttQos.atMostOnce),
     TopicSubscription("SubscribeTopic2", MqttQos.atLeastOnce),
