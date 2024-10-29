@@ -24,5 +24,3 @@ The project is still in its initial stages and needs your help!!. If you face an
 2. Mqtt Message Storage (WIP)
 3. Implementing Authentication Packets
 4. Handling Server initiated disconnections
-5. Handling malformed packets
-6. Ensuring shutdown closes everything

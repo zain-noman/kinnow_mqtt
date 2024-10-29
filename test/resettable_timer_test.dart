@@ -71,3 +71,16 @@ void main() {
     });
   });
 }
+
+/*
+// this test is to check if resources are freed correctly.
+void main() async {
+  final tmr = ResettablePeriodicTimer(
+    time: Duration(seconds: 15),
+    callback: () => print("yahoo"),
+  );
+  tmr.start();
+  await Future.delayed(const Duration(seconds: 5));
+  tmr.stop(dispose: true);
+}
+*/

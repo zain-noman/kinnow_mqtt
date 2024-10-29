@@ -16,6 +16,11 @@ class UnresponsiveNetworkConnection implements MqttNetworkConnection {
   Future<bool> transmit(Iterable<int> bytes) async {
     return false;
   }
+
+  @override
+  Future<void> close() async {
+    print("Mock Socket Closed");
+  }
 }
 
 class TestNetworkConnection implements MqttNetworkConnection {
@@ -36,6 +41,11 @@ class TestNetworkConnection implements MqttNetworkConnection {
       packetReceivedControlller.add(parseRes!.data.packetType);
     }
     return true;
+  }
+
+  @override
+  Future<void> close() async {
+    print("Mock Socket Closed");
   }
 }
 

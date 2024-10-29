@@ -25,6 +25,11 @@ class TestNetworkConnection implements MqttNetworkConnection {
     }
     return true;
   }
+
+  @override
+  Future<void> close() async {
+    print("Mock Socket Closed");
+  }
 }
 
 class MockAliasMgr implements TopicAliasManager {

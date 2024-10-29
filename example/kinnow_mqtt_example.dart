@@ -54,4 +54,7 @@ void main() async {
         "\n \t qos: ${event.qos},"
         "\n \t payload: ${event.payload.asString}"),
   );
+
+  await Future.delayed(const Duration(seconds: 15));
+  client.disconnect();
 }

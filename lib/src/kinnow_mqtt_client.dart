@@ -38,6 +38,9 @@ class MqttActiveConnectionState implements TopicAliasManager {
     pingTimer.stop(dispose: true);
     pubAckController.close();
     pubRecController.close();
+    pubCompController.close();
+    subAckController.close();
+    unsubAckController.close();
   }
 
   @override
@@ -270,6 +273,7 @@ class KinnowMqttClient {
       _activeConnectionState!.dispose();
       _activeConnectionState = null;
       _operationQueue.pause();
+      await networkConnection.close();
 
       if (!reconnect) break;
       connPkt.cleanStart = false;
@@ -648,6 +652,7 @@ class KinnowMqttClient {
     await _eventController.close();
     await _connectionStatusController.close();
     await _disconnectFlagStream.close();
+    await _rxPacketController.close();
     _operationQueue.dispose();
   }
 

@@ -8,6 +8,9 @@ abstract class MqttNetworkConnection {
 
   /// send data on the connection. Returns success or failure
   Future<bool> transmit(Iterable<int> bytes);
+
+  /// close an established connection
+  Future<void> close();
 }
 
 /// Mqtt Connection that uses simple TCP sockets without encryption
@@ -51,6 +54,12 @@ class TcpMqttNetworkConnection implements MqttNetworkConnection {
   }
 
   TcpMqttNetworkConnection(this.host, this.port);
+
+  @override
+  Future<void> close() async {
+    _currentSocket?.destroy();
+    _currentSocket = null;
+  }
 }
 
 /// Mqtt Connection that uses TCP sockets with encryption using TLS/SSL
@@ -105,4 +114,10 @@ class SslTcpMqttNetworkConnection implements MqttNetworkConnection {
   ///     )
   /// ```
   SslTcpMqttNetworkConnection(this.secureSocketMaker);
+
+  @override
+  Future<void> close() async {
+    _currentSocket?.destroy();
+    _currentSocket = null;
+  }
 }
