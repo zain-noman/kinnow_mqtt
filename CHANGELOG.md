@@ -15,3 +15,8 @@
 * Feat: Improvements in example
 * Bugfix: PubRel messages are now sent with the correct flags. (fixes QoS2 transmission)
 * Bugfix: PubRel messages weren't being sent in response to PubRec (fixes QoS2 reception)
+
+## 0.0.4
+
+* Malformed packet handling 
+* Ensuring everything is disposed when the client shuts down
