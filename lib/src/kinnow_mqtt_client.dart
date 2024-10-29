@@ -279,6 +279,9 @@ class KinnowMqttClient {
 
   bool _pingRespReceived = false;
 
+  static const _malformedPacketDisconnectPacket =
+      DisconnectPacket(DisconnectReasonCode.malformedPacket);
+
   void _sendPingReq() {
     networkConnection
         .transmit(MqttFixedHeader(MqttPacketType.pingreq, 0, 0).toBytes());
@@ -341,12 +344,23 @@ class KinnowMqttClient {
       if (packetBytes.length != fixedHdr.remainingLength) {
         return true;
       }
+
+      bool malformedPacketDetected = false;
+      MalformedPacket? malformedPacketEvent;
       switch (fixedHdr.packetType) {
         case MqttPacketType.publish:
           final (rxPub, aliasIssue) = RxPublishPacket.fromBytes(
               packetBytes, fixedHdr.flags, _activeConnectionState!);
+          if (aliasIssue) {
+            malformedPacketEvent =
+                MalformedPacket(packetBytes, message: "Topic alias invalid");
+            _txDisconnectPacket =
+                DisconnectPacket(DisconnectReasonCode.topicAliasInvalid);
+            malformedPacketDetected = true;
+            break;
+          }
           if (rxPub == null) {
-            // TODO: Handle malformed packet and alias issue
+            malformedPacketDetected = true;
             break;
           }
           _handleRxPublishPkt(rxPub);
@@ -354,38 +368,44 @@ class KinnowMqttClient {
           final puback = PubackPacket.fromBytes(packetBytes);
           if (puback != null) {
             _activeConnectionState!.pubAckController.add(puback);
+          } else {
+            malformedPacketDetected = true;
           }
-        // TODO: malformed packet
         case MqttPacketType.pubrec:
           final pubrec = PubrecPacket.fromBytes(packetBytes);
           if (pubrec != null) {
             _activeConnectionState!.pubRecController.add(pubrec);
+          } else {
+            malformedPacketDetected = true;
           }
-        // TODO: malformed packet
         case MqttPacketType.pubrel:
           final pubRel = PubrelPacket.fromBytes(packetBytes);
           if (pubRel != null) {
             _handlePubrelPacket(pubRel);
+          } else {
+            malformedPacketDetected = true;
           }
-        // TODO: malformed packet
         case MqttPacketType.pubcomp:
           final pubcomp = PubcompPacket.fromBytes(packetBytes);
           if (pubcomp != null) {
             _activeConnectionState!.pubCompController.add(pubcomp);
+          } else {
+            malformedPacketDetected = true;
           }
-        // TODO: malformed packet
         case MqttPacketType.suback:
           final suback = SubackPacket.fromBytes(packetBytes);
           if (suback != null) {
             _activeConnectionState!.subAckController.add(suback);
+          } else {
+            malformedPacketDetected = true;
           }
-        // TODO: malformed packet
         case MqttPacketType.unsuback:
           final unsuback = UnsubackPacket.fromBytes(packetBytes);
           if (unsuback != null) {
             _activeConnectionState!.unsubAckController.add(unsuback);
+          } else {
+            malformedPacketDetected = true;
           }
-        // TODO: malformed packet
         case MqttPacketType.pingresp:
           _eventController.add(PingRespReceived());
           _pingRespReceived = true;
@@ -396,6 +416,19 @@ class KinnowMqttClient {
         // TODO: Handle this case.
         default:
         // TODO: Handle this case.
+      }
+      if (malformedPacketDetected) {
+        // _malformedPacketEvent can also be due to alias issue. not overriding
+        malformedPacketEvent ??= MalformedPacket(packetBytes);
+        // _txDisconnectPacket can also be due to alias issue. not overriding
+        _txDisconnectPacket ??= _malformedPacketDisconnectPacket;
+
+        _eventController.add(malformedPacketEvent);
+        _eventController.add(ShutDown(
+          ShutdownType.clientInitiatedMalformedPacket,
+          _txDisconnectPacket,
+        ));
+        break;
       }
     }
     await networkConnection.transmit(_txDisconnectPacket!.toBytes());
