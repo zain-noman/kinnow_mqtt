@@ -1,8 +1,8 @@
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
 
 void main() async {
-  final client =
-      KinnowMqttClient(TcpMqttNetworkConnection("your.brokers.address.here.com", 1883));
+  final client = KinnowMqttClient(
+      TcpMqttNetworkConnection("your.brokers.address.here.com", 1883));
   final connPkt = ConnectPacket(
     cleanStart: true,
     lastWill: null,

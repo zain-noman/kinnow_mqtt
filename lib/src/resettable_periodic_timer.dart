@@ -8,7 +8,7 @@ class ResettablePeriodicTimer {
 
   ResettablePeriodicTimer({required this.time, required this.callback});
 
-  void _internalCallback(){
+  void _internalCallback() {
     callback();
     _currentTimer = Timer(time, _internalCallback);
   }
