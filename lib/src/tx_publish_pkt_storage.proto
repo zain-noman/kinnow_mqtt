@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+message tx_publish_pkt_storage {
+    bool retain = 1;
+    string topic = 2;
+    bytes payload = 3;
+    optional bool payloadFormat = 4;
+    optional int32 messageExpiryInterval = 5;
+    bool useAlias = 6;
+    optional string responseTopic = 7;
+    optional bytes correlationData =  8;
+    map<string,string> userProperties = 9;
+    optional string contentType = 10;
+
+    int32 qos = 11;
+    int32 storageId = 12;
+}
