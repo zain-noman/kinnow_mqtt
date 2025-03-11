@@ -20,7 +20,7 @@ Kinnow (pronounced kee-noo) is a fruit grown in Pakistan and India. Its very sim
 The project is still in its initial stages and needs your help!!. If you face any issue, please do report it. If you have any feature request, also mention it in the issues. 
 
 ## Roadmap
-1. Adding support for Websockets
-2. Mqtt Message Storage (WIP)
+1. Creating an example flutter app 
+2. Adding support for Websockets
 3. Implementing Authentication Packets
 4. Handling Server initiated disconnections
