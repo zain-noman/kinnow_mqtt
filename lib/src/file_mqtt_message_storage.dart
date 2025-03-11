@@ -10,7 +10,9 @@ import 'package:path/path.dart' as path_lib;
 import 'proto/tx_publish_pkt_storage.pb.dart';
 
 class FileMqttMessageStorage implements MqttMessageStorage {
+  /// A directory where the files will be stored.
   final String storageDirectory;
+
   bool _dataSynced = false;
   IOSink? _dataSink;
   IOSink? _deletedIdsSink;
@@ -18,7 +20,10 @@ class FileMqttMessageStorage implements MqttMessageStorage {
   final _mutex = Mutex();
   int _maxId = 0;
 
-  FileMqttMessageStorage(this.storageDirectory);
+  /// create file based mqtt storage object,
+  ///
+  /// [shouldStoreMessage] can be used to specify which messages to store
+  FileMqttMessageStorage(this.storageDirectory, {this.shouldStoreMessage});
 
   final Map<int, MqttMessageStorageRow> _storedMessagesCache = {};
 
@@ -188,7 +193,7 @@ class FileMqttMessageStorage implements MqttMessageStorage {
   List<int> _rowToBytes(MqttMessageStorageRow row) {
     final proto = tx_publish_pkt_storage()
       ..storageId = row.storageId
-      ..qos = row.Qos.index
+      ..qos = row.qos.index
       ..payload = row.packet.payload.asBytes
       ..userProperties.addAll(row.packet.userProperties)
       ..retain = row.packet.retain
@@ -262,7 +267,12 @@ class FileMqttMessageStorage implements MqttMessageStorage {
   }
 
   @override
-  Future<int> storeMessage(MqttQos qos, TxPublishPacket publishPkt) async {
+  Future<int?> storeMessage(MqttQos qos, TxPublishPacket publishPkt) async {
+    if (shouldStoreMessage != null &&
+        shouldStoreMessage!(qos, publishPkt) == false) {
+      return null;
+    }
+
     _maxId++;
     if (!_dataSynced) {
       await _sync().drain();
@@ -282,4 +292,7 @@ class FileMqttMessageStorage implements MqttMessageStorage {
     await _dataSink?.close();
     await _deletedIdsSink?.close();
   }
+
+  @override
+  bool Function(MqttQos qos, TxPublishPacket publishPkt)? shouldStoreMessage;
 }

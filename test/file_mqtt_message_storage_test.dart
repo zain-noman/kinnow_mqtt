@@ -42,7 +42,7 @@ void main() {
           expect(l1[1].storageId, id2);
           expect(l1[1].packet.topic, 'topic2');
 
-          await store.remove(id1);
+          await store.remove(id1!);
 
           await store.dispose();
 

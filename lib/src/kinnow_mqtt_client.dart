@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:async/async.dart';
+import 'package:kinnow_mqtt/src/mqtt_message_storage.dart';
 import 'packets/unsubscribe_packet.dart';
 import 'packets/unsuback_packet.dart';
 import 'packets/conn_ack_packet.dart';
@@ -80,6 +81,13 @@ class KinnowMqttClient {
   /// websocket or any class that implements [MqttNetworkConnection].
   final MqttNetworkConnection networkConnection;
 
+  /// Stores messages persistently so that unsent messages can be sent despite restarts/crashes
+  ///
+  /// can be anything that implements [MqttMessageStorage]. For eg. [FileMqttMessageStorage] implements
+  /// storing messages in a custom file format, Implementations using databases will be more robust but
+  /// are ot provided out of the box to reduce dependencies
+  final MqttMessageStorage? storage;
+
   /// A unique identifier of the client.
   ///
   /// Please ensure using unique clientIds on different devices. If the same clientId
@@ -124,9 +132,12 @@ class KinnowMqttClient {
   /// [networkConnection] : The underlying tcp/tls/websocket connection. see [MqttNetworkConnection]
   /// [initClientId] : The client Id to use, if not specified a client id is generated based on current time.
   /// The [clientId] can also be set at a later time before calling [begin]. Any changes after [begin] will not take effect
-  KinnowMqttClient(this.networkConnection,
-      {String? initClientId,
-      this.reconnectDelay = const Duration(seconds: 10)}) {
+  KinnowMqttClient(
+    this.networkConnection, {
+    String? initClientId,
+    this.reconnectDelay = const Duration(seconds: 10),
+    this.storage,
+  }) {
     clientId =
         initClientId ?? "kinnow_mqtt_${DateTime.now().millisecondsSinceEpoch}";
     _disconnectFlagStream.onListen = () {
@@ -137,6 +148,9 @@ class KinnowMqttClient {
   }
 
   bool _begun = false;
+
+  /// Simply tells if the [begin] method has already been called
+  bool isRunning() => _begun;
 
   /// Start the mqtt connection. return the stream of events. This should not be called twice
   ///
@@ -232,6 +246,8 @@ class KinnowMqttClient {
   }
 
   Future<void> _internalLoop(ConnectPacket connPkt) async {
+    await storage?.initialize(clientId);
+    await _enqueueStoredMessages();
     while (true) {
       final (exit, streamQ) = await _connect(connPkt);
 
@@ -447,6 +463,14 @@ class KinnowMqttClient {
   /// returns a future that completes with 'true' if the message was transmitted and
   /// completes with false if the client shuts down before the message could be sent
   Future<bool> publishQos0(TxPublishPacket pubPkt) {
+    return _publishQos0Internal(pubPkt);
+  }
+
+  /// the argument [storageId] can be used to avoid duplicate storage for pre
+  /// stored messages
+  Future<bool> _publishQos0Internal(TxPublishPacket pubPkt,
+      {int? storageId}) async {
+    storageId ??= await storage?.storeMessage(MqttQos.atMostOnce, pubPkt);
     final token = _operationQueue.generateToken();
     return _operationQueue.addToQueueAndExecute(
       token,
@@ -454,6 +478,9 @@ class KinnowMqttClient {
         final txPkt = InternalTxPublishPacket(
             null, MqttQos.atMostOnce, pubPkt, _activeConnectionState!);
         await networkConnection.transmit(txPkt.bytes);
+        if (storageId != null) {
+          await storage?.remove(storageId);
+        }
       },
     ).then((value) => value == OperationResult.operationExecuted);
   }
@@ -472,7 +499,16 @@ class KinnowMqttClient {
   /// more than once. Returns a future that completes with the [PubackPacket] sent
   /// by the server if the message was transmitted and completes with null if the
   /// client shuts down before the message could be sent
-  Future<PubackPacket?> publishQos1(TxPublishPacket pubPkt) async {
+  Future<PubackPacket?> publishQos1(TxPublishPacket pubPkt) {
+    return _publishQos1Internal(pubPkt);
+  }
+
+  /// the argument [storageId] can be used to avoid duplicate storage for pre
+  /// stored messages
+  Future<PubackPacket?> _publishQos1Internal(TxPublishPacket pubPkt,
+      {int? storageId}) async {
+    storageId ??= await storage?.storeMessage(MqttQos.atMostOnce, pubPkt);
+
     bool isDuplicate = false;
     final token = _operationQueue.generateToken();
     final packetId = _generatePacketId();
@@ -498,6 +534,9 @@ class KinnowMqttClient {
               orElse: () => null)
           .timeout(const Duration(seconds: 5), onTimeout: () => null);
 
+      if (storageId != null) {
+        await storage?.remove(storageId);
+      }
       if (pubAck != null) return pubAck;
 
       isDuplicate = true;
@@ -510,8 +549,16 @@ class KinnowMqttClient {
   /// more overhead. returns a future that completes with the [PubrecPacket] and
   /// the [PubcompPacket] sent by the server if the message was transmitted and
   /// completes with null if the client shuts down before the message could be sent
-  Future<(PubrecPacket, PubcompPacket)?> publishQos2(
-      TxPublishPacket pubPkt) async {
+  Future<(PubrecPacket, PubcompPacket)?> publishQos2(TxPublishPacket pubPkt) {
+    return _publishQos2Internal(pubPkt);
+  }
+
+  /// the argument [storageId] can be used to avoid duplicate storage for pre
+  /// stored messages
+  Future<(PubrecPacket, PubcompPacket)?> _publishQos2Internal(
+      TxPublishPacket pubPkt,
+      {int? storageId}) async {
+    storageId ??= await storage?.storeMessage(MqttQos.atMostOnce, pubPkt);
     bool isDuplicate = false;
     final token = _operationQueue.generateToken();
     final packetId = _generatePacketId();
@@ -568,6 +615,9 @@ class KinnowMqttClient {
       if (pubComp != null) break;
 
       isDuplicate = true;
+    }
+    if (storageId != null) {
+      await storage?.remove(storageId);
     }
     return (pubRec, pubComp);
   }
@@ -653,6 +703,7 @@ class KinnowMqttClient {
     await _connectionStatusController.close();
     await _disconnectFlagStream.close();
     await _rxPacketController.close();
+    await storage?.dispose();
     _operationQueue.dispose();
   }
 
@@ -719,6 +770,47 @@ class KinnowMqttClient {
               null, const {}).toBytes());
         },
       ));
+    }
+  }
+
+  Future<void> _enqueueStoredMessages() async {
+    if (storage == null) return;
+    await for (final storageRow in storage!.fetchAll()) {
+      switch (storageRow.qos) {
+        case MqttQos.atMostOnce:
+          _publishQos0Internal(storageRow.packet,
+                  storageId: storageRow.storageId)
+              .then(
+            (success) {
+              if (success) {
+                _eventController.add(StoredMessageSentQos0(storageRow.packet));
+              }
+            },
+          );
+        case MqttQos.atLeastOnce:
+          _publishQos1Internal(storageRow.packet,
+                  storageId: storageRow.storageId)
+              .then(
+            (response) {
+              if (response != null) {
+                _eventController
+                    .add(StoredMessageSentQos1(storageRow.packet, response));
+              }
+            },
+          );
+        case MqttQos.exactlyOnce:
+          _publishQos2Internal(storageRow.packet,
+                  storageId: storageRow.storageId)
+              .then(
+            (response) {
+              if (response != null) {
+                final (pubrec, pubcomp) = response;
+                _eventController.add(
+                    StoredMessageSentQos2(storageRow.packet, pubrec, pubcomp));
+              }
+            },
+          );
+      }
     }
   }
 }

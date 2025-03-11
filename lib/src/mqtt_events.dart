@@ -1,5 +1,7 @@
 import 'packets/conn_ack_packet.dart';
 import 'packets/disconnect_packet.dart';
+import 'packets/pub_misc_packet.dart';
+import 'packets/publish_packet.dart';
 
 /// A base class for all Mqtt Events.
 ///
@@ -105,4 +107,22 @@ class ShutDown extends MqttEvent {
   final DisconnectPacket? disconnectPacket;
 
   ShutDown(this.type, this.disconnectPacket);
+}
+
+class StoredMessageSentQos0 extends MqttEvent{
+  TxPublishPacket packet;
+  StoredMessageSentQos0(this.packet);
+}
+
+class StoredMessageSentQos1 extends MqttEvent{
+  TxPublishPacket packet;
+  PubackPacket puback;
+  StoredMessageSentQos1(this.packet,this.puback);
+}
+
+class StoredMessageSentQos2 extends MqttEvent{
+  TxPublishPacket packet;
+  PubrecPacket pubrec;
+  PubcompPacket pubcomp;
+  StoredMessageSentQos2(this.packet,this.pubrec,this.pubcomp);
 }
