@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
 import 'package:hex/hex.dart';
+import 'package:kinnow_mqtt_flutter_example/disconnect_action.dart';
 
 import 'connect_action.dart';
 
@@ -11,7 +12,7 @@ class ActionSelector extends StatefulWidget {
 
   const ActionSelector({
     super.key,
-    this.actionWidgetMap = const {MqttActions.connect: ConnectActionMaker()},
+    this.actionWidgetMap = const {MqttActions.connect: ConnectActionMaker(), MqttActions.disconnect:DisconnectAction()},
   });
 
   @override
@@ -222,8 +223,9 @@ class EnumFormField<T extends Enum> extends StatelessWidget {
       const SizedBox(width: 10),
       Expanded(
         child: DropdownButtonFormField(
+          isExpanded: true,
           items: options.entries
-              .map((e) => DropdownMenuItem(value: e.value, child: Text(e.key)))
+              .map((e) => DropdownMenuItem(value: e.value, child: Text(e.key,overflow: TextOverflow.ellipsis,)))
               .toList(),
           onChanged: onChange,
           validator: (value) {

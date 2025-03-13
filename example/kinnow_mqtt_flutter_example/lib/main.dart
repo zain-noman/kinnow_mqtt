@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
         );
       case ShutDown():
         LogsProvider.of(context).addLog(
-          GenericMqttEventLog(isSentByClient: true, title: "Client Shut Down"),
+          GenericMqttEventLog(isSentByClient: true, title: "Client Shut Down", data: {"Shutdown reason":event.type.name}),
         );
       case StoredMessageSentQos0():
       // TODO: Handle this case.
