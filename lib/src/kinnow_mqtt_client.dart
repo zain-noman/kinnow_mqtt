@@ -149,8 +149,8 @@ class KinnowMqttClient {
 
   bool _begun = false;
 
-  /// Simply tells if the [begin] method has already been called
-  bool isRunning() => _begun;
+  /// tells if the [begin] method has been called and client has not shut down
+  bool isRunning() => _begun && !_eventController.isClosed;
 
   /// Start the mqtt connection. return the stream of events. This should not be called twice
   ///

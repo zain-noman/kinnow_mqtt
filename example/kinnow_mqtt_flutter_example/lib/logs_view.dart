@@ -1,0 +1,44 @@
+import 'package:flutter/material.dart';
+import 'package:kinnow_mqtt_flutter_example/mqtt_logs.dart';
+import 'logs_provider.dart';
+
+class LogsView extends StatelessWidget {
+  const LogsView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      itemCount: LogsProvider.of(context).logs.length,
+      itemBuilder: (context, index) {
+        final log = LogsProvider.of(context).logs.elementAt(index);
+
+        final Widget dataWidget;
+
+        // since the MqttEventLog is a sealed class i can switch case over its
+        // subtypes
+        switch(log){
+          case GenericMqttEventLog():
+            dataWidget = GenericMqttLogWidget(log);
+        }
+
+        return Align(
+          alignment:
+          log.isSentByClient ? Alignment.centerRight : Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: 0.75,
+            child: Container(
+              // color: Theme.of(context).colorScheme.primary,
+              decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: const BorderRadius.all(Radius.circular(20))),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: dataWidget,
+              ),
+            ),
+          ),
+        );
+      }, separatorBuilder: (BuildContext context, int index) =>const SizedBox(height: 10,),
+    );
+  }
+}
