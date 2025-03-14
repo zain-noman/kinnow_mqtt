@@ -41,19 +41,25 @@ class MyApp extends StatelessWidget {
         );
       case PingRespReceived():
         LogsProvider.of(context).addLog(
-          GenericMqttEventLog(isSentByClient: false, title: "Ping Response Received"),
+          GenericMqttEventLog(
+              isSentByClient: false, title: "Ping Response Received"),
         );
       case PingRespNotReceived():
         LogsProvider.of(context).addLog(
-          GenericMqttEventLog(isSentByClient: false, title: "Ping Response Not Received"),
+          GenericMqttEventLog(
+              isSentByClient: false, title: "Ping Response Not Received"),
         );
       case ConnackTimedOut():
         LogsProvider.of(context).addLog(
-          GenericMqttEventLog(isSentByClient: false, title: "ConnAck Not Received"),
+          GenericMqttEventLog(
+              isSentByClient: false, title: "ConnAck Not Received"),
         );
       case ShutDown():
         LogsProvider.of(context).addLog(
-          GenericMqttEventLog(isSentByClient: true, title: "Client Shut Down", data: {"Shutdown reason":event.type.name}),
+          GenericMqttEventLog(
+              isSentByClient: true,
+              title: "Client Shut Down",
+              data: {"Shutdown reason": event.type.name}),
         );
       case StoredMessageSentQos0():
       // TODO: Handle this case.
@@ -62,6 +68,10 @@ class MyApp extends StatelessWidget {
       case StoredMessageSentQos2():
       // TODO: Handle this case.
     }
+  }
+
+  void onMessageReceived(RxPublishPacket message, BuildContext context) {
+    LogsProvider.of(context).addLog(RxPublishPacketLog(message));
   }
 
   // This widget is the root of your application.
@@ -77,6 +87,8 @@ class MyApp extends StatelessWidget {
             onPrimaryContainer: Colors.orange.shade800,
             secondary: Colors.green.shade200,
             onSecondary: Colors.green.shade800,
+            secondaryContainer: Colors.green.shade200,
+            onSecondaryContainer: Colors.green.shade600,
             brightness: Brightness.light,
             error: Colors.red,
             onError: Colors.white,
@@ -87,7 +99,10 @@ class MyApp extends StatelessWidget {
       ),
       home: LogsProviderBase(
         child: MqttProviderBase(
-            onMqttEvent: mqttEventHandler, child: const HomePage()),
+          onMqttEvent: mqttEventHandler,
+          onMessageReceive: onMessageReceived,
+          child: const HomePage(),
+        ),
       ),
     );
   }

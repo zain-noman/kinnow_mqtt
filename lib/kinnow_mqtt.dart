@@ -9,7 +9,7 @@ export 'src/packets/pub_misc_packet.dart'
 export 'src/packets/publish_packet.dart' show TxPublishPacket, RxPublishPacket;
 export 'src/packets/suback_packet.dart';
 export 'src/packets/subscribe_packet.dart'
-    show SubscribePacket, TopicSubscription;
+    show SubscribePacket, TopicSubscription, RetainHandlingOption;
 export 'src/packets/unsuback_packet.dart';
 export 'src/packets/unsubscribe_packet.dart' show UnsubscribePacket;
 

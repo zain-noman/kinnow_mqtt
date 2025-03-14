@@ -16,14 +16,19 @@ class LogsView extends StatelessWidget {
 
         // since the MqttEventLog is a sealed class i can switch case over its
         // subtypes
-        switch(log){
+        switch (log) {
           case GenericMqttEventLog():
             dataWidget = GenericMqttLogWidget(log);
+          case RxPublishPacketLog():
+            dataWidget = RxPublishPacketLogWidget(log: log);
+          case SubscribePacketLog():
+            dataWidget = SubscribePacketLogWidget(
+                subscribePacket: log.subscribePacket, subackFut: log.subackFut);
         }
 
         return Align(
           alignment:
-          log.isSentByClient ? Alignment.centerRight : Alignment.centerLeft,
+              log.isSentByClient ? Alignment.centerRight : Alignment.centerLeft,
           child: FractionallySizedBox(
             widthFactor: 0.75,
             child: Container(
@@ -38,7 +43,10 @@ class LogsView extends StatelessWidget {
             ),
           ),
         );
-      }, separatorBuilder: (BuildContext context, int index) =>const SizedBox(height: 10,),
+      },
+      separatorBuilder: (BuildContext context, int index) => const SizedBox(
+        height: 10,
+      ),
     );
   }
 }
