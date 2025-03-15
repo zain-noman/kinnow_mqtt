@@ -12,7 +12,7 @@ class PublishAction extends StatefulWidget {
   State<PublishAction> createState() => _PublishActionState();
 }
 
-class _PublishActionState extends State<PublishAction> {
+class _PublishActionState extends State<PublishAction> with AutomaticKeepAliveClientMixin {
   bool retain = false;
   String? topic;
   StringOrBytes? payload;
@@ -63,6 +63,14 @@ class _PublishActionState extends State<PublishAction> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    if (MqttProvider.of(context).client == null ||
+        MqttProvider.of(context).client!.isRunning() == false) {
+      return Center(
+        child: Text("Client is not started",
+            style: TextStyle(color: Theme.of(context).colorScheme.error)),
+      );
+    }
     return Form(
         key: _formKey,
         child: Column(children: [
@@ -102,4 +110,7 @@ class _PublishActionState extends State<PublishAction> {
               onPressed: onPublishPressed, child: const Text("Publish"))
         ]));
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

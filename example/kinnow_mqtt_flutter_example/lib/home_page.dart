@@ -63,7 +63,7 @@ class HomePage extends StatelessWidget {
               flex: 1,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: SingleChildScrollView(child: actionsWidget),
+                child: actionsWidget,
               ),
             ),
           ],

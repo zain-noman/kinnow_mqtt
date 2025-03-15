@@ -10,7 +10,7 @@ class DisconnectAction extends StatefulWidget {
   State<DisconnectAction> createState() => _DisconnectActionState();
 }
 
-class _DisconnectActionState extends State<DisconnectAction> {
+class _DisconnectActionState extends State<DisconnectAction> with AutomaticKeepAliveClientMixin{
   DisconnectReasonCode? reasonCode;
   int? sessionExpiryInterval;
   String? reasonString;
@@ -19,10 +19,13 @@ class _DisconnectActionState extends State<DisconnectAction> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (MqttProvider.of(context).client == null ||
         MqttProvider.of(context).client!.isRunning() == false) {
-      return Text("Client is not Connected",
-          style: TextStyle(color: Theme.of(context).colorScheme.error));
+      return Center(
+        child: Text("Client is not started",
+            style: TextStyle(color: Theme.of(context).colorScheme.error)),
+      );
     }
     return Form(
         key: _formKey,
@@ -54,4 +57,7 @@ class _DisconnectActionState extends State<DisconnectAction> {
 
     MqttProvider.of(context).client!.disconnect(disconnectPkt: disconnectPkt);
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

@@ -13,7 +13,7 @@ class ConnectActionMaker extends StatefulWidget {
   State<ConnectActionMaker> createState() => _ConnectActionMakerState();
 }
 
-class _ConnectActionMakerState extends State<ConnectActionMaker> {
+class _ConnectActionMakerState extends State<ConnectActionMaker> with AutomaticKeepAliveClientMixin {
   String? host;
   int? port;
   String? clientId;
@@ -80,6 +80,7 @@ class _ConnectActionMakerState extends State<ConnectActionMaker> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -140,4 +141,7 @@ class _ConnectActionMakerState extends State<ConnectActionMaker> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

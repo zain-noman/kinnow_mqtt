@@ -10,16 +10,8 @@ import 'connect_action.dart';
 enum MqttActions { connect, publish, subscribe, unsubscribe, disconnect }
 
 class ActionSelector extends StatefulWidget {
-  final Map<MqttActions, Widget> actionWidgetMap;
-
   const ActionSelector({
     super.key,
-    this.actionWidgetMap = const {
-      MqttActions.connect: ConnectActionMaker(),
-      MqttActions.disconnect: DisconnectAction(),
-      MqttActions.subscribe: SubscribeAction(),
-      MqttActions.publish: PublishAction(),
-    },
   });
 
   @override
@@ -28,6 +20,19 @@ class ActionSelector extends StatefulWidget {
 
 class _ActionSelectorState extends State<ActionSelector> {
   MqttActions selectedAction = MqttActions.connect;
+  late PageController pageController;
+
+  @override
+  void initState() {
+    pageController = PageController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,14 +48,32 @@ class _ActionSelectorState extends State<ActionSelector> {
                 .toList(),
             selected: {selectedAction},
             onSelectionChanged: (selection) {
+              pageController.animateToPage(selection.first.index,
+                  duration: const Duration(milliseconds: 150),
+                  curve: Easing.standard);
               setState(() {
                 selectedAction = selection.first;
               });
             },
           ),
         ),
-        widget.actionWidgetMap[selectedAction] ??
-            const Text("No widget for selected action")
+        Expanded(
+          child: PageView(
+            controller: pageController,
+            onPageChanged: (value) {
+              setState(() {
+                selectedAction = MqttActions.values[value];
+              });
+            },
+            children: const [
+              SingleChildScrollView(child: ConnectActionMaker()),
+              SingleChildScrollView(child: PublishAction()),
+              SingleChildScrollView(child: SubscribeAction()),
+              SingleChildScrollView(child: Placeholder()),
+              SingleChildScrollView(child: DisconnectAction()),
+            ],
+          ),
+        )
       ],
     );
   }

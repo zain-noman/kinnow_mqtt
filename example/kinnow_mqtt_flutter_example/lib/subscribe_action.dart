@@ -20,7 +20,8 @@ class SubscribeAction extends StatefulWidget {
   State<SubscribeAction> createState() => _SubscribeActionState();
 }
 
-class _SubscribeActionState extends State<SubscribeAction> {
+class _SubscribeActionState extends State<SubscribeAction>
+    with AutomaticKeepAliveClientMixin {
   final List<TopicSubscriptionData> topicSubData = [];
   final panelExpanded = <bool>[];
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -90,10 +91,13 @@ class _SubscribeActionState extends State<SubscribeAction> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (MqttProvider.of(context).client == null ||
         MqttProvider.of(context).client!.isRunning() == false) {
-      return Text("Client is not Connected",
-          style: TextStyle(color: Theme.of(context).colorScheme.error));
+      return Center(
+        child: Text("Client is not started",
+            style: TextStyle(color: Theme.of(context).colorScheme.error)),
+      );
     }
     return Form(
       key: _formKey,
@@ -128,8 +132,7 @@ class _SubscribeActionState extends State<SubscribeAction> {
                       }),
                   child: const Icon(Icons.delete)),
               FilledButton(
-                  onPressed:
-                      (topicSubData.isEmpty) ? null : onSubscribePressed,
+                  onPressed: (topicSubData.isEmpty) ? null : onSubscribePressed,
                   child: const Text("Subscribe")),
             ],
           ),
@@ -137,4 +140,7 @@ class _SubscribeActionState extends State<SubscribeAction> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
