@@ -83,7 +83,7 @@ class _SubscribeActionState extends State<SubscribeAction> {
               "always show retain",
               topicSubData[e.$1].retainAsPublished,
               (p0) => setState(() {
-                    topicSubData[e.$1].retainAsPublished = !p0;
+                    topicSubData[e.$1].retainAsPublished = p0;
                   })),
         ]));
   }
