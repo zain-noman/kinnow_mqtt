@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
 import 'package:hex/hex.dart';
 import 'package:kinnow_mqtt_flutter_example/disconnect_action.dart';
+import 'package:kinnow_mqtt_flutter_example/publish_action.dart';
 import 'package:kinnow_mqtt_flutter_example/subscribe_action.dart';
 
 import 'connect_action.dart';
@@ -16,7 +17,8 @@ class ActionSelector extends StatefulWidget {
     this.actionWidgetMap = const {
       MqttActions.connect: ConnectActionMaker(),
       MqttActions.disconnect: DisconnectAction(),
-      MqttActions.subscribe: SubscribeAction()
+      MqttActions.subscribe: SubscribeAction(),
+      MqttActions.publish: PublishAction(),
     },
   });
 

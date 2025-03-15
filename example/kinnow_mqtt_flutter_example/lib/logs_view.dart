@@ -24,6 +24,12 @@ class LogsView extends StatelessWidget {
           case SubscribePacketLog():
             dataWidget = SubscribePacketLogWidget(
                 subscribePacket: log.subscribePacket, subackFut: log.subackFut);
+          case TxPublishPacketLogQos0():
+            dataWidget = Qos0PublishLogWidget(log: log);
+          case TxPublishPacketLogQos1():
+            dataWidget = Qos1PublishLogWidget(log: log);
+          case TxPublishPacketLogQos2():
+            dataWidget = Qos2PublishLogWidget(log: log);
         }
 
         return Align(
