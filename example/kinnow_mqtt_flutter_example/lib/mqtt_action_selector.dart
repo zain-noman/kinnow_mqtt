@@ -4,6 +4,7 @@ import 'package:hex/hex.dart';
 import 'package:kinnow_mqtt_flutter_example/disconnect_action.dart';
 import 'package:kinnow_mqtt_flutter_example/publish_action.dart';
 import 'package:kinnow_mqtt_flutter_example/subscribe_action.dart';
+import 'package:kinnow_mqtt_flutter_example/unsubscribe_action.dart';
 
 import 'connect_action.dart';
 
@@ -69,7 +70,7 @@ class _ActionSelectorState extends State<ActionSelector> {
               SingleChildScrollView(child: ConnectActionMaker()),
               SingleChildScrollView(child: PublishAction()),
               SingleChildScrollView(child: SubscribeAction()),
-              SingleChildScrollView(child: Placeholder()),
+              SingleChildScrollView(child: UnsubscribeAction()),
               SingleChildScrollView(child: DisconnectAction()),
             ],
           ),
@@ -236,11 +237,12 @@ class EnumFormField<T extends Enum> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, T?> options;// = nameValueMap.cast<String, T?>();
+    final Map<String, T?> options; // = nameValueMap.cast<String, T?>();
     if (isRequired) {
       options = nameValueMap.cast<String, T?>();
     } else {
-      options = nameValueMap.map<String, T?>((key, value) => MapEntry(key, value))
+      options = nameValueMap
+          .map<String, T?>((key, value) => MapEntry(key, value))
         ..addEntries([const MapEntry("None", null)]);
     }
     return Row(children: [

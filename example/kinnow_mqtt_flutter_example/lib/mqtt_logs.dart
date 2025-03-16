@@ -229,21 +229,25 @@ class SubscribePacketLogWidget extends StatelessWidget {
             if (response == null) {
               return Text("Subscribe Failed", style: labelStyle);
             }
-            return Column(children: [
-              Text("Subscribe Acknowledge Packet",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      )),
-              ...response.reasonCodes.indexed.map((e) => Row(children: [
-                    Text("Topic ${e.$1}: ", style: labelStyle),
-                    Text(e.$2.name, style: bodyStyle)
-                  ])),
-              if (response.reasonString != null)
-                Row(children: [
-                  Text("reason string: ", style: labelStyle),
-                  Text(response.reasonString!, style: bodyStyle)
-                ])
-            ]);
+            return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Subscribe Acknowledge Packet",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
+                          )),
+                  ...response.reasonCodes.indexed.map((e) => Row(children: [
+                        Text("Topic ${e.$1}: ", style: labelStyle),
+                        Text(e.$2.name, style: bodyStyle)
+                      ])),
+                  if (response.reasonString != null)
+                    Row(children: [
+                      Text("reason string: ", style: labelStyle),
+                      Text(response.reasonString!, style: bodyStyle)
+                    ])
+                ]);
           },
         ),
       ],
@@ -314,16 +318,15 @@ class TxPublishPktLogWidget extends StatelessWidget {
     };
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text("Publish",
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                 )),
-        Row(children: [
-          Flexible(
-            child: Text("Topic: ", style: labelStyle),
-          ),
+        Row(
+            children: [
+            Text("Topic: ", style: labelStyle),
           Text(pkt.topic, style: bodyStyle),
           const Spacer(),
           if (pkt.retain) Text("Retained", style: onSecondaryLabelStyle),
@@ -361,6 +364,7 @@ class Qos0PublishLogWidget extends StatelessWidget {
           color: Theme.of(context).colorScheme.onPrimaryContainer,
         );
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TxPublishPktLogWidget(pkt: log.pkt, qos: MqttQos.atMostOnce),
         Divider(color: Theme.of(context).colorScheme.shadow),
@@ -441,6 +445,7 @@ class Qos1PublishLogWidget extends StatelessWidget {
         .labelLarge
         ?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer);
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TxPublishPktLogWidget(pkt: log.pkt, qos: MqttQos.atLeastOnce),
         Divider(color: Theme.of(context).colorScheme.shadow),
@@ -475,6 +480,7 @@ class Qos2PublishLogWidget extends StatelessWidget {
         .labelLarge
         ?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer);
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TxPublishPktLogWidget(pkt: log.pkt, qos: MqttQos.exactlyOnce),
         Divider(color: Theme.of(context).colorScheme.shadow),
@@ -502,6 +508,79 @@ class Qos2PublishLogWidget extends StatelessWidget {
             );
           },
         )
+      ],
+    );
+  }
+}
+
+class UnsubscribeMqttEventLog extends MqttEventLog {
+  final UnsubscribePacket unsubscribePacket;
+  final Future<UnsubackPacket?> unsubackFut;
+
+  UnsubscribeMqttEventLog(this.unsubscribePacket, this.unsubackFut,
+      {super.isSentByClient = true});
+}
+
+class UnsubscribeLogWidget extends StatelessWidget {
+  final UnsubscribeMqttEventLog log;
+
+  const UnsubscribeLogWidget({super.key, required this.log});
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle = Theme.of(context)
+        .textTheme
+        .labelLarge
+        ?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer);
+    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Unsubscribe Packet",
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+            )),
+        ...log.unsubscribePacket.topicFilters.indexed.map((e) => Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Topic ${e.$1}: ", style: labelStyle),
+                Flexible(child: Text(e.$2, style: bodyStyle))
+              ],
+            )),
+        Divider(color: Theme.of(context).colorScheme.shadow),
+        ResponseFutureBuilder(
+            future: log.unsubackFut,
+            responseCompletedBuilder: (response) {
+              if (response == null) {
+                return Text("Acknowledge not received", style: labelStyle);
+              }
+              return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Unsubscribe Acknowledge Packet",
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer,
+                        )),
+                    ...response.reasonCodes.indexed.map((e) => Row(
+                          children: [
+                            Text("Topic ${e.$1}: ", style: labelStyle),
+                            Flexible(child: Text(e.$2.name, style: bodyStyle))
+                          ],
+                        )),
+                    if (response.reasonString != null)
+                      Row(
+                        children: [
+                          Text("Reason String: ", style: labelStyle),
+                          Flexible(child: Text(response.reasonString!))
+                        ],
+                      ),
+                  ]);
+            })
       ],
     );
   }
