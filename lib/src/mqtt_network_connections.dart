@@ -41,7 +41,7 @@ class TcpMqttNetworkConnection implements MqttNetworkConnection {
           _currentSocket = null;
         },
         handleError: (error, stackTrace, sink) {
-          if (error is SocketException){
+          if (error is SocketException) {
             sink.close();
           }
         },
@@ -95,7 +95,7 @@ class SslTcpMqttNetworkConnection implements MqttNetworkConnection {
           _currentSocket = null;
         },
         handleError: (error, stackTrace, sink) {
-          if (error is SocketException){
+          if (error is SocketException) {
             sink.close();
           }
         },

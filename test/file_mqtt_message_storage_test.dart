@@ -34,7 +34,7 @@ void main() {
 
           final l1 = await store.fetchAll().toList();
 
-          expect(l1.length,2);
+          expect(l1.length, 2);
 
           expect(l1[0].storageId, id1);
           expect(l1[0].packet.topic, 'topic1');

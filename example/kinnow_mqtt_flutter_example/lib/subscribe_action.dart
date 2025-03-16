@@ -166,7 +166,8 @@ class _SubscribeActionState extends State<SubscribeAction>
       const Text(
           "if set to `true` all retained messages will have the retain flag set to true, if `false` only the message that was retained before subscription will have the retain flag set"),
       Text("Subscription Id", style: titleStyle),
-      const Text("Messages sent to the client due to this subscription will have the specified subscription along with them. This can be useful to assign callbacks without comparing string for performance"),
+      const Text(
+          "Messages sent to the client due to this subscription will have the specified subscription along with them. This can be useful to assign callbacks without comparing string for performance"),
     ]);
   }
 

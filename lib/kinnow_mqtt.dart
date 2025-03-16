@@ -19,3 +19,4 @@ export 'src/mqtt_events.dart';
 export 'src/mqtt_message_storage.dart';
 export 'src/mqtt_network_connections.dart';
 export 'src/mqtt_qos.dart';
+export 'src/file_mqtt_message_storage.dart';

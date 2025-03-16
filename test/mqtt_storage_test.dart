@@ -87,7 +87,7 @@ void main() {
 
       MockStorage storage = MockStorage();
 
-      final c = KinnowMqttClient(net,storage: storage);
+      final c = KinnowMqttClient(net, storage: storage);
       final eventStream = c.begin(ConnectPacket(
           cleanStart: false,
           lastWill: null,
@@ -122,15 +122,15 @@ void main() {
       expect(eventsList, contains(isA<StoredMessageSentQos0>()));
 
       // acknowledge QOS 1 and 2 pkts
-      for (final i in PubackPacket(1,null,null,{}).toBytes()){
+      for (final i in PubackPacket(1, null, null, {}).toBytes()) {
         net.controller?.add(i);
       }
-      for (final i in PubrecPacket(2,null,null,{}).toBytes()){
+      for (final i in PubrecPacket(2, null, null, {}).toBytes()) {
         net.controller?.add(i);
       }
       await Future.delayed(const Duration(seconds: 1));
       expect(eventsList, contains(isA<StoredMessageSentQos1>()));
-      for (final i in PubcompPacket(2,null,null,{}).toBytes()){
+      for (final i in PubcompPacket(2, null, null, {}).toBytes()) {
         net.controller?.add(i);
       }
       await Future.delayed(const Duration(seconds: 1));

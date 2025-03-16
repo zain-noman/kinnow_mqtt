@@ -366,11 +366,11 @@ class InfoButton extends StatelessWidget {
       onPressed: () {
         showModalBottomSheet(
           context: context,
-          builder: (context) =>
-              SingleChildScrollView(child: Padding(
-                padding: const EdgeInsets.all(30),
-                child: infoBuilder(context),
-              )),
+          builder: (context) => SingleChildScrollView(
+              child: Padding(
+            padding: const EdgeInsets.all(30),
+            child: infoBuilder(context),
+          )),
         );
       },
       icon: Icon(

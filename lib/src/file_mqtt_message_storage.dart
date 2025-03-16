@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path_lib;
 import 'proto/tx_publish_pkt_storage.pb.dart';
 
+/// implements persistent storage pf Mqtt Messages in files
 class FileMqttMessageStorage implements MqttMessageStorage {
   /// A directory where the files will be stored.
   final String storageDirectory;

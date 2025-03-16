@@ -49,15 +49,17 @@ class _DisconnectActionState extends State<DisconnectAction>
         ));
   }
 
-  Widget buildInfo(BuildContext context){
+  Widget buildInfo(BuildContext context) {
     final titleStyle = Theme.of(context).textTheme.titleMedium;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text("Reason", style: titleStyle),
       const Text("Is used to describe the reason for disconnection"),
       Text("Session expiry interval", style: titleStyle),
-      const Text("The mqtt broker will delete session state after this period (in seconds) if provided"),
+      const Text(
+          "The mqtt broker will delete session state after this period (in seconds) if provided"),
       Text("Reason String", style: titleStyle),
-      const Text("A human readable string to provide extra information about the reason of disconnection"),
+      const Text(
+          "A human readable string to provide extra information about the reason of disconnection"),
     ]);
   }
 

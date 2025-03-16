@@ -23,7 +23,7 @@ sealed class MqttEvent {}
 
 /// The event when a socket/SSL-socket/websocket connection attempt failed
 ///
-/// The library automatically retries connection after [KinnowMqttClient.retryInterval] in this case
+/// The library automatically retries connection after [KinnowMqttClient.reconnectDelay] in this case
 class NetworkConnectionFailure extends MqttEvent {}
 
 /// The event when an established network connection becomes disconnected after successful connecting
@@ -109,20 +109,20 @@ class ShutDown extends MqttEvent {
   ShutDown(this.type, this.disconnectPacket);
 }
 
-class StoredMessageSentQos0 extends MqttEvent{
+class StoredMessageSentQos0 extends MqttEvent {
   TxPublishPacket packet;
   StoredMessageSentQos0(this.packet);
 }
 
-class StoredMessageSentQos1 extends MqttEvent{
+class StoredMessageSentQos1 extends MqttEvent {
   TxPublishPacket packet;
   PubackPacket puback;
-  StoredMessageSentQos1(this.packet,this.puback);
+  StoredMessageSentQos1(this.packet, this.puback);
 }
 
-class StoredMessageSentQos2 extends MqttEvent{
+class StoredMessageSentQos2 extends MqttEvent {
   TxPublishPacket packet;
   PubrecPacket pubrec;
   PubcompPacket pubcomp;
-  StoredMessageSentQos2(this.packet,this.pubrec,this.pubcomp);
+  StoredMessageSentQos2(this.packet, this.pubrec, this.pubcomp);
 }
