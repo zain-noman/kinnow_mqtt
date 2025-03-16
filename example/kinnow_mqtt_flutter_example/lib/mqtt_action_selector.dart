@@ -354,3 +354,30 @@ class _StringOrBytesNullableFormFieldState
     );
   }
 }
+
+class InfoButton extends StatelessWidget {
+  final Widget Function(BuildContext) infoBuilder;
+
+  const InfoButton({super.key, required this.infoBuilder});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) =>
+              SingleChildScrollView(child: Padding(
+                padding: const EdgeInsets.all(30),
+                child: infoBuilder(context),
+              )),
+        );
+      },
+      icon: Icon(
+        Icons.info,
+        color: Theme.of(context).colorScheme.shadow,
+      ),
+      label: const Text("info"),
+    );
+  }
+}

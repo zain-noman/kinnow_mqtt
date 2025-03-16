@@ -112,6 +112,8 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
       key: _formKey,
       child: Column(
         children: [
+          const SizedBox(height: 10),
+          InfoButton(infoBuilder: infoWidget),
           StringNullableFormField("host", true, (p0) => host = p0),
           IntNullableFormField("port", true, (p0) => port = p0!),
           IntNullableFormField(
@@ -160,6 +162,7 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
                   (p0) => setState(() => requestProblemInformation = p0)),
             ],
           ),
+          const SizedBox(height: 10),
           FilledButton(
             onPressed: onConnectPressed,
             child: const Text("Connect"),
@@ -167,6 +170,47 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
         ],
       ),
     );
+  }
+
+  Widget infoWidget(BuildContext context){
+    final titleStyle = Theme.of(context).textTheme.titleMedium;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
+      Text("Host", style: titleStyle,),
+      const Text("Ip address or uri of the mqtt broker"),
+      Text("Port", style: titleStyle,),
+      const Text("The port for socket connection. 1883 is commonly used"),
+      Text("Keep Alive Interval",style: titleStyle),
+      Text("Client Id",style: titleStyle),
+      const Text("A unique identifier of the client.Please ensure using unique clientIds on different devices. If the same clientId is used, disconnections may occur."),
+      Text("Username",style: titleStyle),
+      const Text("username for username + password based authentication"),
+      Text("Password",style: titleStyle),
+      const Text("password for username + password based authentication. Does not necessarily need to be a string"),
+      Text("Clean Start",style: titleStyle),
+      const Text("if 'true', any previous state stored by the server is discarded, otherwise it is used"),
+      Text("Tls Enabled",style: titleStyle),
+      const Text("Enabling TLS makes your connection secure from being spied on"),
+      Text("Session Expiry Interval",style: titleStyle),
+      const Text("the server will delete the 'state' of the client this many seconds after network disconnection"),
+      Text("Receive Maximum",style: titleStyle),
+      const Text("the maximum number of in progress QoS1 and QoS2 messages that the client can handle at a time. The library does not currently use this value to limit the message rate"),
+      Text("Max Receive Packet Size",style: titleStyle),
+      const Text("messages larger than this size will not be forwarded by the broker to this client"),
+      Text("Topic Alias Max",style: titleStyle),
+      const Text("the maximum number of topics aliases to be used"),
+      Text("Request Response Information",style: titleStyle),
+      const Text("if 'true' the server should send responseInformation in the ConnAckPacket"),
+      Text("Request Problem Information",style: titleStyle),
+      const Text("whether the server will send reason strings on packets"),
+      Text("Will Qos",style: titleStyle),
+      const Text("The Qos of the last will packet"),
+      Text("Will Retain",style: titleStyle),
+      const Text("The retain of the last will packet"),
+      Text("Will Topic",style: titleStyle),
+      const Text("The topic of the last will packet"),
+      Text("Will Payload",style: titleStyle),
+      const Text("The Payload of the last will packet"),
+    ],);
   }
 
   @override

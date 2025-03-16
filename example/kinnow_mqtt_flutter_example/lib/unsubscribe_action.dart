@@ -45,8 +45,11 @@ class _UnsubscribeActionState extends State<UnsubscribeAction>
       key: _formKey,
       child: Column(
         children: [
+          const SizedBox(height: 10),
+          InfoButton(infoBuilder: infoBuilder),
           ...topics.indexed.map((e) => StringNullableFormField(
               "Topic ${e.$1}", true, (p0) => topics[e.$1] = p0)),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -64,6 +67,15 @@ class _UnsubscribeActionState extends State<UnsubscribeAction>
         ],
       ),
     );
+  }
+
+  Widget infoBuilder(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.titleMedium;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text("Unsubscribing", style: titleStyle),
+      const Text(
+          "Similarly to subscribing, you can unsubscribe from multiple topics at the same time"),
+    ]);
   }
 
   @override

@@ -97,7 +97,7 @@ class ConnectPacket {
   /// future versions
   final int protocolVersion;
 
-  /// if 'false', any previous state stored by the server is discarded, otherwise it is used
+  /// if 'true', any previous state stored by the server is discarded, otherwise it is used
   bool cleanStart;
 
   /// the last will message properties, if null no last will message will be used
@@ -124,7 +124,7 @@ class ConnectPacket {
   /// the library does not currently use this value to limit the message rate
   final int? receiveMaximum;
 
-  /// messages larger than this size will not be forwarded by the broke to this client
+  /// messages larger than this size will not be forwarded by the broker to this client
   final int? maxRecvPacketSize;
 
   /// the maximum number of topics aliases to be used

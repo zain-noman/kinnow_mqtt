@@ -103,6 +103,8 @@ class _SubscribeActionState extends State<SubscribeAction>
       key: _formKey,
       child: Column(
         children: [
+          const SizedBox(height: 10),
+          InfoButton(infoBuilder: infoBuilder),
           ExpansionPanelList(
             children: topicSubData.indexed
                 .map((e) => _buildTopicSubscriptionForm(e))
@@ -113,6 +115,7 @@ class _SubscribeActionState extends State<SubscribeAction>
           ),
           IntNullableFormField(
               "subscription id", false, (p0) => subscriptionId = p0),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -139,6 +142,32 @@ class _SubscribeActionState extends State<SubscribeAction>
         ],
       ),
     );
+  }
+
+  Widget infoBuilder(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.titleMedium;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text("Subscribing", style: titleStyle),
+      const Text(
+          "MQTT actually allows subscribing to multiple topics at the same time, Use the '+' and 'trashcan' icons to add or remove topics"),
+      Text("Topic", style: titleStyle),
+      const Text(
+          "The topic to subscribe to. Can contain wildcards like '#' and '+'"),
+      Text("Max QoS", style: titleStyle),
+      const Text(
+          "This is the Maximum QoS with which the broker will send messages to this client on this topic. Keep in mind that this is the QoS between the broker and the client irrespective of the sender. Higher QoS messages are downgraded by the broker to maxQoS. For eg. if you subscribe to a topic 'test' with MaxQos = QoS1, and some client sends a message with QoS2. That message will be received with QoS1. QoS1 and QoS0 messages will be received with their original QoS"),
+      Text("Retain Handling", style: titleStyle),
+      const Text(
+          "Configures how to handle retained messages.'sendRetainedOnEachMatchSub' sends the retained messages even if this is the second time subscribing to the topic. 'sendRetainedOnFirstMatchSub' means do not send retained messages if the topic was subscribed earlier. 'doNotSendRetainedMessages' will never send retained messages"),
+      Text("Loop back", style: titleStyle),
+      const Text(
+          "Configures whether the subscription should also send back the client's own messages"),
+      Text("Always Show Retain", style: titleStyle),
+      const Text(
+          "if set to `true` all retained messages will have the retain flag set to true, if `false` only the message that was retained before subscription will have the retain flag set"),
+      Text("Subscription Id", style: titleStyle),
+      const Text("Messages sent to the client due to this subscription will have the specified subscription along with them. This can be useful to assign callbacks without comparing string for performance"),
+    ]);
   }
 
   @override

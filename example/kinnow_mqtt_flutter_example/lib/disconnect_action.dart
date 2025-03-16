@@ -32,6 +32,8 @@ class _DisconnectActionState extends State<DisconnectAction>
         key: _formKey,
         child: Column(
           children: [
+            const SizedBox(height: 10),
+            InfoButton(infoBuilder: buildInfo),
             EnumFormField(
                 "reason",
                 true,
@@ -41,9 +43,22 @@ class _DisconnectActionState extends State<DisconnectAction>
                 (p0) => sessionExpiryInterval = p0),
             StringNullableFormField(
                 "reason string", false, (p0) => reasonString = p0),
+            const SizedBox(height: 10),
             FilledButton(onPressed: onPressed, child: const Text("disconnect"))
           ],
         ));
+  }
+
+  Widget buildInfo(BuildContext context){
+    final titleStyle = Theme.of(context).textTheme.titleMedium;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
+      Text("Reason", style: titleStyle),
+      const Text("Is used to describe the reason for disconnection"),
+      Text("Session expiry interval", style: titleStyle),
+      const Text("The mqtt broker will delete session state after this period (in seconds) if provided"),
+      Text("Reason String", style: titleStyle),
+      const Text("A human readable string to provide extra information about the reason of disconnection"),
+    ]);
   }
 
   void onPressed() {
