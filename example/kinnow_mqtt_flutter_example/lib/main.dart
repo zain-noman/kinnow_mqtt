@@ -84,7 +84,7 @@ class MyApp extends StatelessWidget {
             primary: Colors.orange,
             onPrimary: Colors.white,
             primaryContainer: Colors.orange.shade100,
-            onPrimaryContainer: Colors.orange.shade800,
+            onPrimaryContainer: Colors.brown.shade900,
             secondary: Colors.green.shade200,
             onSecondary: Colors.green.shade800,
             secondaryContainer: Colors.green.shade200,

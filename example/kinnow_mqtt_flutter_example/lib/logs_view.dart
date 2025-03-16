@@ -46,7 +46,14 @@ class LogsView extends StatelessWidget {
                   borderRadius: const BorderRadius.all(Radius.circular(20))),
               child: Padding(
                 padding: const EdgeInsets.all(15),
-                child: dataWidget,
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                      textTheme: Theme.of(context).textTheme.apply(
+                          bodyColor: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer)),
+                  child: dataWidget,
+                ),
               ),
             ),
           ),

@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
+import 'package:kinnow_mqtt_flutter_example/logs_provider.dart';
+import 'package:kinnow_mqtt_flutter_example/mqtt_logs.dart';
 import 'package:kinnow_mqtt_flutter_example/mqtt_provider.dart';
 
 import 'mqtt_action_selector.dart';
@@ -24,14 +26,12 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
   bool tlsEnabled = false;
   int? keepAliveInterval;
   bool useLastWill = false;
-
   int? sessionExpiryInterval;
   int? receiveMaximum;
   int? maxRecvPacketSize;
   int? topicAliasMax;
   bool? requestResponseInformation;
   bool? requestProblemInformation;
-
   MqttQos? willQos;
   bool willRetain = false;
   String? willTopic;
@@ -77,6 +77,32 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
 
     MqttProvider.of(context)
         .updateClient(connectPacket, networkConnection, clientId: clientId);
+    LogsProvider.of(context).addLog(GenericMqttEventLog(
+        isSentByClient: true,
+        title: "Client Initialized",
+        data: {
+          "host": host.toString(),
+          "port": port.toString(),
+          "client Id": clientId.toString(),
+          "username": username.toString(),
+          "password": password.toString(),
+          "clean start": cleanStart.toString(),
+          "tls enabled": tlsEnabled.toString(),
+          "keep alive interval": keepAliveInterval.toString(),
+          "session expiry interval": sessionExpiryInterval.toString(),
+          "receive maximum": receiveMaximum.toString(),
+          "max recv packet size": maxRecvPacketSize.toString(),
+          "topic alias max": topicAliasMax.toString(),
+          "request response information": requestResponseInformation.toString(),
+          "request problem information": requestProblemInformation.toString(),
+          "use last will": useLastWill.toString(),
+          if (useLastWill) ...{
+            "will qos": willQos.toString(),
+            "will retain": willRetain.toString(),
+            "will topic": willTopic.toString(),
+            "will payload": willPayload.toString(),
+          }
+        }));
   }
 
   @override
@@ -88,11 +114,11 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
         children: [
           StringNullableFormField("host", true, (p0) => host = p0),
           IntNullableFormField("port", true, (p0) => port = p0!),
+          IntNullableFormField(
+              "keep alive interval", true, (p0) => keepAliveInterval = p0!),
           StringNullableFormField("client id", false, (p0) => clientId = p0),
           StringNullableFormField("username", false, (p0) => username = p0),
           StringNullableFormField("password", false, (p0) => password = p0),
-          IntNullableFormField(
-              "keep alive interval", true, (p0) => keepAliveInterval = p0!),
           BoolFormField("clean start", cleanStart,
               (p0) => setState(() => cleanStart = p0)),
           BoolFormField("use SSL/TLS", tlsEnabled,

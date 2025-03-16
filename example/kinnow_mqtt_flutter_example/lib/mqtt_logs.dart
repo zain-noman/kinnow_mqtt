@@ -9,6 +9,27 @@ sealed class MqttEventLog {
   MqttEventLog({required this.isSentByClient});
 }
 
+class KeyValueRow extends StatelessWidget {
+  final String keyText;
+  final String value;
+
+  const KeyValueRow({super.key, required this.keyText, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("$keyText: ", style: Theme.of(context).textTheme.labelLarge),
+        Flexible(
+          child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+        ),
+      ],
+    );
+  }
+}
+
 class GenericMqttEventLog extends MqttEventLog {
   final String title;
   final String? subtitle;
@@ -31,43 +52,15 @@ class GenericMqttLogWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          log.title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
-        ),
+        Text(log.title, style: Theme.of(context).textTheme.titleMedium),
         if (log.subtitle != null)
           Flexible(
-            child: Text(
-              log.subtitle!,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-            ),
+            child: Text(log.subtitle!,
+                style: Theme.of(context).textTheme.bodyMedium),
           ),
         const SizedBox(height: 10),
-        ...log.data.entries.map((e) => Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "${e.key}: ",
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                ),
-                Flexible(
-                  child: Text(
-                    e.value,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                  ),
-                )
-              ],
-            ))
+        ...log.data.entries
+            .map((e) => KeyValueRow(keyText: e.key, value: e.value))
       ],
     );
   }
@@ -93,16 +86,9 @@ class RxPublishPacketLogWidget extends StatelessWidget {
       payloadDisplay = log.packet.payload.asString;
     }
 
-    final labelStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        );
-    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        );
-    final onSecondaryLabelStyle =
-        Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
-            );
+    final labelStyle = Theme.of(context).textTheme.labelLarge;
+    final bodyStyle = Theme.of(context).textTheme.bodyMedium;
+    final onSecondaryLabelStyle = Theme.of(context).textTheme.labelLarge;
 
     final Map<String, String> additionalData = {
       "Payload Format": log.packet.payloadFormat.toString(),
@@ -116,9 +102,7 @@ class RxPublishPacketLogWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Message Received",
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                )),
+            style: Theme.of(context).textTheme.titleMedium),
         Row(children: [
           Flexible(
             child: Text("Topic: ", style: labelStyle),
@@ -134,14 +118,7 @@ class RxPublishPacketLogWidget extends StatelessWidget {
         ExpansionTile(
           title: Text("More", style: labelStyle),
           children: additionalData.entries
-              .map((e) => Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("${e.key}: ", style: labelStyle),
-                      Flexible(child: Text(e.value, style: bodyStyle))
-                    ],
-                  ))
+              .map((e) => KeyValueRow(keyText: e.key, value: e.value))
               .toList(),
         )
       ],
@@ -164,9 +141,7 @@ class ResponseFutureBuilder<T> extends StatelessWidget {
     return FutureBuilder(
         future: future,
         builder: (context, snapshot) {
-          final labelStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-              );
+          final labelStyle = Theme.of(context).textTheme.labelLarge;
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Row(
               children: [
@@ -198,30 +173,18 @@ class SubscribePacketLogWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        );
-    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        );
+    final labelStyle = Theme.of(context).textTheme.labelLarge;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Subscribe Packet",
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                )),
+            style: Theme.of(context).textTheme.titleMedium),
         if (subscribePacket.subscriptionId != null)
-          Row(children: [
-            Text("Subscription Id: ", style: labelStyle),
-            Text(subscribePacket.subscriptionId.toString(), style: bodyStyle),
-          ]),
+          KeyValueRow(
+              keyText: "Subscription Id",
+              value: subscribePacket.subscriptionId.toString()),
         ...subscribePacket.topics.indexed.map(
-          (e) => Row(children: [
-            Text("Topic ${e.$1}: ", style: labelStyle),
-            Text(e.$2.topic, style: bodyStyle),
-          ]),
-        ),
+            (e) => KeyValueRow(keyText: "Topic ${e.$1}", value: e.$2.topic)),
         Divider(color: Theme.of(context).colorScheme.shadow),
         ResponseFutureBuilder(
           future: subackFut,
@@ -233,20 +196,12 @@ class SubscribePacketLogWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Subscribe Acknowledge Packet",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer,
-                          )),
-                  ...response.reasonCodes.indexed.map((e) => Row(children: [
-                        Text("Topic ${e.$1}: ", style: labelStyle),
-                        Text(e.$2.name, style: bodyStyle)
-                      ])),
+                      style: Theme.of(context).textTheme.titleMedium),
+                  ...response.reasonCodes.indexed.map((e) =>
+                      KeyValueRow(keyText: "Topic ${e.$1}", value: e.$2.name)),
                   if (response.reasonString != null)
-                    Row(children: [
-                      Text("reason string: ", style: labelStyle),
-                      Text(response.reasonString!, style: bodyStyle)
-                    ])
+                    KeyValueRow(
+                        keyText: "reason string", value: response.reasonString!)
                 ]);
           },
         ),
@@ -295,16 +250,9 @@ class TxPublishPktLogWidget extends StatelessWidget {
       payloadDisplay = pkt.payload.asString;
     }
 
-    final labelStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        );
-    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        );
-    final onSecondaryLabelStyle =
-        Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
-            );
+    final labelStyle = Theme.of(context).textTheme.labelLarge;
+    final bodyStyle = Theme.of(context).textTheme.bodyMedium;
+    final onSecondaryLabelStyle = Theme.of(context).textTheme.labelLarge;
 
     final Map<String, String> additionalData = {
       "Payload Format": pkt.payloadFormat.toString(),
@@ -320,10 +268,7 @@ class TxPublishPktLogWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text("Publish",
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                )),
+        Text("Publish", style: Theme.of(context).textTheme.titleMedium),
         Row(children: [
           Text("Topic: ", style: labelStyle),
           Text(pkt.topic, style: bodyStyle),
@@ -337,14 +282,7 @@ class TxPublishPktLogWidget extends StatelessWidget {
         ExpansionTile(
           title: Text("More", style: labelStyle),
           children: additionalData.entries
-              .map((e) => Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("${e.key}: ", style: labelStyle),
-                      Flexible(child: Text(e.value, style: bodyStyle))
-                    ],
-                  ))
+              .map((e) => KeyValueRow(keyText: e.key, value: e.value))
               .toList(),
         )
       ],
@@ -359,9 +297,7 @@ class Qos0PublishLogWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        );
+    final labelStyle = Theme.of(context).textTheme.labelLarge;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -399,34 +335,15 @@ class PubCommonLogWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = Theme.of(context)
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer);
-    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                )),
-        Row(children: [
-          Text("packet id: ", style: labelStyle),
-          Text(packetId.toString(), style: bodyStyle)
-        ]),
+        Text(title, style: Theme.of(context).textTheme.titleMedium),
+        KeyValueRow(keyText: "packet id", value: packetId.toString()),
         if (reasonCode != null)
-          Row(children: [
-            Text("reason code: ", style: labelStyle),
-            Text(reasonCode!, style: bodyStyle)
-          ]),
+          KeyValueRow(keyText: "reason code", value: reasonCode!),
         if (reasonString != null)
-          Row(children: [
-            Text("reason string: ", style: labelStyle),
-            Text(reasonString!, style: bodyStyle)
-          ]),
+          KeyValueRow(keyText: "reason string", value: reasonString!),
       ],
     );
   }
@@ -439,10 +356,7 @@ class Qos1PublishLogWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = Theme.of(context)
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer);
+    final labelStyle = Theme.of(context).textTheme.labelLarge;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -474,10 +388,7 @@ class Qos2PublishLogWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = Theme.of(context)
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer);
+    final labelStyle = Theme.of(context).textTheme.labelLarge;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -527,28 +438,14 @@ class UnsubscribeLogWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = Theme.of(context)
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer);
-    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        );
+    final labelStyle = Theme.of(context).textTheme.labelLarge;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Unsubscribe Packet",
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                )),
-        ...log.unsubscribePacket.topicFilters.indexed.map((e) => Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Topic ${e.$1}: ", style: labelStyle),
-                Flexible(child: Text(e.$2, style: bodyStyle))
-              ],
-            )),
+            style: Theme.of(context).textTheme.titleMedium),
+        ...log.unsubscribePacket.topicFilters.indexed
+            .map((e) => KeyValueRow(keyText: "Topic ${e.$1}", value: e.$2)),
         Divider(color: Theme.of(context).colorScheme.shadow),
         ResponseFutureBuilder(
             future: log.unsubackFut,
@@ -560,25 +457,13 @@ class UnsubscribeLogWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("Unsubscribe Acknowledge Packet",
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer,
-                                )),
-                    ...response.reasonCodes.indexed.map((e) => Row(
-                          children: [
-                            Text("Topic ${e.$1}: ", style: labelStyle),
-                            Flexible(child: Text(e.$2.name, style: bodyStyle))
-                          ],
-                        )),
+                        style: Theme.of(context).textTheme.titleMedium),
+                    ...response.reasonCodes.indexed.map((e) => KeyValueRow(
+                        keyText: "Topic ${e.$1}", value: e.$2.name)),
                     if (response.reasonString != null)
-                      Row(
-                        children: [
-                          Text("Reason String: ", style: labelStyle),
-                          Flexible(child: Text(response.reasonString!))
-                        ],
-                      ),
+                      KeyValueRow(
+                          keyText: "reason string",
+                          value: response.reasonString!)
                   ]);
             })
       ],
