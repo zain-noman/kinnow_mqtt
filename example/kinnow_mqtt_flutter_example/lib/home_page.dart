@@ -57,11 +57,9 @@ class HomePage extends StatelessWidget {
                 child: logsWidget,
               )),
           if (orientation == Orientation.portrait)
-            Divider(
-                color: Theme.of(context).colorScheme.shadow),
+            Divider(color: Theme.of(context).colorScheme.shadow),
           if (orientation == Orientation.landscape)
-            VerticalDivider(
-                color: Theme.of(context).colorScheme.shadow),
+            VerticalDivider(color: Theme.of(context).colorScheme.shadow),
           Expanded(
             flex: 1,
             child: Padding(

@@ -30,6 +30,8 @@ class LogsView extends StatelessWidget {
             dataWidget = Qos1PublishLogWidget(log: log);
           case TxPublishPacketLogQos2():
             dataWidget = Qos2PublishLogWidget(log: log);
+          case UnsubscribeMqttEventLog():
+            dataWidget = UnsubscribeLogWidget(log: log);
         }
 
         return Align(
@@ -43,7 +45,7 @@ class LogsView extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: const BorderRadius.all(Radius.circular(20))),
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(15),
                 child: dataWidget,
               ),
             ),

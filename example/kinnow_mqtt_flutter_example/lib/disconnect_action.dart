@@ -10,7 +10,8 @@ class DisconnectAction extends StatefulWidget {
   State<DisconnectAction> createState() => _DisconnectActionState();
 }
 
-class _DisconnectActionState extends State<DisconnectAction> with AutomaticKeepAliveClientMixin{
+class _DisconnectActionState extends State<DisconnectAction>
+    with AutomaticKeepAliveClientMixin {
   DisconnectReasonCode? reasonCode;
   int? sessionExpiryInterval;
   String? reasonString;

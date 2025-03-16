@@ -8,10 +8,14 @@ class MqttProviderBase extends StatefulWidget {
   // for this project it made sense to have a single message handler in the provider.
   // for other projects it is recommended to have a stream listener for each component
   // that needs to listen to messages
-  final void Function(RxPublishPacket message, BuildContext context)? onMessageReceive;
+  final void Function(RxPublishPacket message, BuildContext context)?
+      onMessageReceive;
 
   const MqttProviderBase(
-      {super.key, required this.child, required this.onMqttEvent, this.onMessageReceive});
+      {super.key,
+      required this.child,
+      required this.onMqttEvent,
+      this.onMessageReceive});
 
   @override
   State<MqttProviderBase> createState() => _MqttProviderBaseState();

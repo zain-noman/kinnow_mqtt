@@ -324,9 +324,8 @@ class TxPublishPktLogWidget extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                 )),
-        Row(
-            children: [
-            Text("Topic: ", style: labelStyle),
+        Row(children: [
+          Text("Topic: ", style: labelStyle),
           Text(pkt.topic, style: bodyStyle),
           const Spacer(),
           if (pkt.retain) Text("Retained", style: onSecondaryLabelStyle),
@@ -540,8 +539,8 @@ class UnsubscribeLogWidget extends StatelessWidget {
       children: [
         Text("Unsubscribe Packet",
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
-            )),
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                )),
         ...log.unsubscribePacket.topicFilters.indexed.map((e) => Row(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -561,11 +560,12 @@ class UnsubscribeLogWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("Unsubscribe Acknowledge Packet",
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onPrimaryContainer,
-                        )),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer,
+                                )),
                     ...response.reasonCodes.indexed.map((e) => Row(
                           children: [
                             Text("Topic ${e.$1}: ", style: labelStyle),

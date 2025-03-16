@@ -12,7 +12,8 @@ class PublishAction extends StatefulWidget {
   State<PublishAction> createState() => _PublishActionState();
 }
 
-class _PublishActionState extends State<PublishAction> with AutomaticKeepAliveClientMixin {
+class _PublishActionState extends State<PublishAction>
+    with AutomaticKeepAliveClientMixin {
   bool retain = false;
   String? topic;
   StringOrBytes? payload;

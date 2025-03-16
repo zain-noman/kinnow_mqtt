@@ -13,7 +13,8 @@ class ConnectActionMaker extends StatefulWidget {
   State<ConnectActionMaker> createState() => _ConnectActionMakerState();
 }
 
-class _ConnectActionMakerState extends State<ConnectActionMaker> with AutomaticKeepAliveClientMixin {
+class _ConnectActionMakerState extends State<ConnectActionMaker>
+    with AutomaticKeepAliveClientMixin {
   String? host;
   int? port;
   String? clientId;
@@ -65,7 +66,7 @@ class _ConnectActionMakerState extends State<ConnectActionMaker> with AutomaticK
       lastWill: will,
       keepAliveSeconds: keepAliveInterval!,
       username: username,
-      password: (password==null)? null : StringOrBytes.fromString(password!),
+      password: (password == null) ? null : StringOrBytes.fromString(password!),
       sessionExpiryIntervalSeconds: sessionExpiryInterval,
       receiveMaximum: receiveMaximum,
       maxRecvPacketSize: maxRecvPacketSize,
@@ -104,8 +105,8 @@ class _ConnectActionMakerState extends State<ConnectActionMaker> with AutomaticK
               children: [
                 EnumFormField("Will QoS", true, MqttQos.values.asNameMap(),
                     (p0) => willQos = p0),
-                BoolFormField("Will Retain", willRetain,
-                    (p0) => willRetain = p0),
+                BoolFormField(
+                    "Will Retain", willRetain, (p0) => willRetain = p0),
                 StringNullableFormField(
                     "Will Topic", true, (p0) => willTopic = p0),
                 StringOrBytesNullableFormField(
