@@ -40,6 +40,11 @@ class TcpMqttNetworkConnection implements MqttNetworkConnection {
           sink.close();
           _currentSocket = null;
         },
+        handleError: (error, stackTrace, sink) {
+          if (error is SocketException){
+            sink.close();
+          }
+        },
       ));
     } catch (e) {
       return null;

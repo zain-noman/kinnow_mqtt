@@ -48,27 +48,38 @@ class HomePage extends StatelessWidget {
         actions: [connectionIcon],
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
-      body: Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
+      body: OrientationBuilder(builder: (context, orientation) {
+        final children = [
+          Expanded(
               flex: 2,
-                child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: logsWidget,
-            )),
-            Divider(color: Theme.of(context).colorScheme.shadow,),
-            Expanded(
-              flex: 1,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: actionsWidget,
-              ),
+                child: logsWidget,
+              )),
+          if (orientation == Orientation.portrait)
+            Divider(
+                color: Theme.of(context).colorScheme.shadow),
+          if (orientation == Orientation.landscape)
+            VerticalDivider(
+                color: Theme.of(context).colorScheme.shadow),
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: actionsWidget,
             ),
-          ],
-        ),
-      ),
+          ),
+        ];
+        if (orientation == Orientation.portrait) {
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children);
+        } else {
+          return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children);
+        }
+      }),
     );
   }
 }

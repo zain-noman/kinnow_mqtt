@@ -236,11 +236,11 @@ class EnumFormField<T extends Enum> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, T?> options;
+    final Map<String, T?> options;// = nameValueMap.cast<String, T?>();
     if (isRequired) {
       options = nameValueMap.cast<String, T?>();
     } else {
-      options = nameValueMap.cast<String, T?>()
+      options = nameValueMap.map<String, T?>((key, value) => MapEntry(key, value))
         ..addEntries([const MapEntry("None", null)]);
     }
     return Row(children: [
@@ -252,7 +252,7 @@ class EnumFormField<T extends Enum> extends StatelessWidget {
                 color: Theme.of(context).colorScheme.shadow)),
       const SizedBox(width: 10),
       Expanded(
-        child: DropdownButtonFormField(
+        child: DropdownButtonFormField<T?>(
           isExpanded: true,
           items: options.entries
               .map((e) => DropdownMenuItem(
@@ -296,6 +296,7 @@ class _StringOrBytesNullableFormFieldState
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const SizedBox(height: 10),
         Row(children: [
           Text(widget.title),
           if (!widget.isRequired)
