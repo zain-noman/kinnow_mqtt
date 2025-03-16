@@ -20,3 +20,9 @@
 
 * Malformed packet handling 
 * Ensuring everything is disposed when the client shuts down
+
+## 0.9.0
+
+* replace isar mqtt message storage with file based storage
+* added a new example flutter project
+* fix bug in handling socket errors
