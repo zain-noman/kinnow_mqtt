@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Kinnow Mqtt Desktop Client
+Comment=A Mqtt 5 client showcasing the capabilities of Kinnow Mqtt
+Exec=kinnow_mqtt_flutter_desktop_client
+Icon=${SNAP}/meta/gui/kinnow-mqtt-flutter-desktop-client.png
+Terminal=false
+Type=Application
+Categories=Education; # Adjust accordingly your snap category.

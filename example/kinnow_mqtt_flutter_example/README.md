@@ -1,16 +1,6 @@
-# kinnow_mqtt_flutter_example
+# Kinnow MQTT 🍊 flutter client example
+A Desktop Mqtt 5 Client built using Kinnow MQTT. The project aims to represent the core capabilities 
+of Kinnow Mqtt and does not aim to be a full blown desktop MQTT Client. As such it lacks some quality 
+of life features that one expects to find in a full blown desktop Mqtt Client (like filtering by topic etc)
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Ready to use packages are available from the Releases section of the Github Repository

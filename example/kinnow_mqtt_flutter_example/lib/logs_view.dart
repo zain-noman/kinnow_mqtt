@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kinnow_mqtt_flutter_example/mqtt_logs.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/mqtt_logs.dart';
 import 'logs_provider.dart';
 
 class LogsView extends StatelessWidget {

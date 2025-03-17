@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="kinnow_mqtt_flutter_example"
+        android:label="kinnow_mqtt_flutter_desktop_client"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

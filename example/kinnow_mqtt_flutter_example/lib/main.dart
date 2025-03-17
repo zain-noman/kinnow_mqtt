@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
-import 'package:kinnow_mqtt_flutter_example/logs_provider.dart';
-import 'package:kinnow_mqtt_flutter_example/mqtt_logs.dart';
-import 'package:kinnow_mqtt_flutter_example/mqtt_provider.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/logs_provider.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/mqtt_logs.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/mqtt_provider.dart';
 import 'home_page.dart';
 
 void main() {

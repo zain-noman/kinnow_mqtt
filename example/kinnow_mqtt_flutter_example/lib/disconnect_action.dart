@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
-import 'package:kinnow_mqtt_flutter_example/mqtt_action_selector.dart';
-import 'package:kinnow_mqtt_flutter_example/mqtt_provider.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/mqtt_action_selector.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/mqtt_provider.dart';
 
 class DisconnectAction extends StatefulWidget {
   const DisconnectAction({super.key});

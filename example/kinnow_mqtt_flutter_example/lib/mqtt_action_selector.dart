@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
 import 'package:hex/hex.dart';
-import 'package:kinnow_mqtt_flutter_example/disconnect_action.dart';
-import 'package:kinnow_mqtt_flutter_example/publish_action.dart';
-import 'package:kinnow_mqtt_flutter_example/subscribe_action.dart';
-import 'package:kinnow_mqtt_flutter_example/unsubscribe_action.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/disconnect_action.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/publish_action.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/subscribe_action.dart';
+import 'package:kinnow_mqtt_flutter_desktop_client/unsubscribe_action.dart';
 
 import 'connect_action.dart';
 

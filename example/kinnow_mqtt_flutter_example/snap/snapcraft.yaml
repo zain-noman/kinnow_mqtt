@@ -1,0 +1,31 @@
+name: kinnow-mqtt-flutter-desktop-client
+version: 0.0.1
+summary: A Mqtt 5 client showcasing the capabilities of Kinnow Mqtt
+description: |
+  A Desktop Mqtt 5 Client built using Kinnow MQTT. The project aims to represent the core capabilities
+  of Kinnow Mqtt and does not aim to be a full blown desktop MQTT Client. As such it lacks some quality
+  of life features that one expects to find in a full blown desktop Mqtt Client (like filtering by topic etc)
+
+confinement: strict
+base: core22
+grade: stable
+
+slots:
+  dbus-kinnow-mqtt-flutter-desktop-client:
+    interface: dbus
+    bus: session
+    name: zain.noman.kinnow_mqtt_flutter_desktop_client
+
+apps:
+  kinnow-mqtt-flutter-desktop-client:
+    command: kinnow_mqtt_flutter_desktop_client
+    extensions: [gnome] # gnome includes the libraries required by flutter
+    plugs:
+      - network
+    slots:
+      - dbus-kinnow-mqtt-flutter-desktop-client
+parts:
+  kinnow-mqtt-flutter-desktop-client:
+    source: .
+    plugin: flutter
+    flutter-target: lib/main.dart # The main entry-point file of the application

@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 import "package:kinnow_mqtt/kinnow_mqtt.dart";
-import "package:kinnow_mqtt_flutter_example/logs_provider.dart";
+import "package:kinnow_mqtt_flutter_desktop_client/logs_provider.dart";
 import "package:hex/hex.dart";
 
 sealed class MqttEventLog {
@@ -127,12 +127,13 @@ class RxPublishPacketLogWidget extends StatelessWidget {
 }
 
 class ResponseFutureBuilder<T> extends StatelessWidget {
-  const ResponseFutureBuilder({
-    super.key,
-    required this.future,
-    required this.responseCompletedBuilder,
-  });
+  const ResponseFutureBuilder(
+      {super.key,
+      required this.future,
+      required this.responseCompletedBuilder,
+      this.awaitingFutureText = "Awaiting Response"});
 
+  final String awaitingFutureText;
   final Future<T> future;
   final Widget Function(T response) responseCompletedBuilder;
 
@@ -145,7 +146,7 @@ class ResponseFutureBuilder<T> extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Row(
               children: [
-                Text("Awaiting Response", style: labelStyle),
+                Text(awaitingFutureText, style: labelStyle),
                 const Spacer(),
                 const CircularProgressIndicator()
               ],
@@ -305,6 +306,7 @@ class Qos0PublishLogWidget extends StatelessWidget {
         Divider(color: Theme.of(context).colorScheme.shadow),
         ResponseFutureBuilder(
           future: log.response,
+          awaitingFutureText: "Sending",
           responseCompletedBuilder: (response) {
             if (response) {
               return Text("Sent Successfully", style: labelStyle);
