@@ -158,7 +158,9 @@ class ConnAckPacket {
     while (bytesDone < propertyLenRes.data) {
       final propertyId = currentBlock.elementAt(0);
       ParseResult parseRes;
-      switch (propertyId) {
+
+      // ignore: unnecessary_cast
+      switch (propertyId as int) {
         case 0x11:
           {
             final parseResTemp = ByteUtils.parseFourByte(currentBlock.skip(1));
