@@ -26,3 +26,11 @@
 * replace isar mqtt message storage with file based storage
 * added a new example flutter project
 * fix bug in handling socket errors
+
+## 0.9.1
+
+* fixed an issue in connack packet that only occurred in release mode
+* renamed the example flutter project
+* fixed the message shown for QoS0 packets in example app
+* added snap builds for linux
+* created a logo!!!
