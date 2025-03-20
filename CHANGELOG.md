@@ -34,3 +34,9 @@
 * fixed the message shown for QoS0 packets in example app
 * added snap builds for linux
 * created a logo!!!
+
+## 0.9.2
+
+* fixed a mistake in the pubspec path of the demo app
+* updated the readme to feature the demo app
+* fixed a mistake in the .desktop file used for the linux snap package

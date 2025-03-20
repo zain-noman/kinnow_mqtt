@@ -15,12 +15,20 @@ The library is built with unreliable networks in mind. The client ensures that o
 ![Client Lifecycle](Kinnow_Mqtt_Lifecycle.png)
 
 ## What's with the name?
-Kinnow (pronounced kee-noo) is a fruit grown in Pakistan and India. Its very similar to orange, but is a bit less tangy and more pulpy.
+Kinnow (pronounced kee-noo) is a fruit grown in Pakistan and India. Its a specie of orange, but is a bit less tangy and more pulpy.
 
-## Contributing
-The project is still in its initial stages and needs your help!!. If you face any issue, please do report it. If you have any feature request, also mention it in the issues. 
+## Desktop Mqtt Client Demo Application
+![Demo App Screenshot](desktop_demo_app.png)
+To quickly evaluate Kinnow Mqtt, check out the Kinnow Mqtt flutter demo application located in the directory `example/kinnow_mqtt_flutter_example`. A snap package for linux is also available in the releases section
+The demo application has the following features. 
+1. Implements many of the advanced features of MQTT5, and can be used to test them
+2. The codebase showcases how Kinnow Mqtt may be implemented in a flutter application
+3. The app can be used to evaluate how Kinnow Mqtt handles connections, disconnections etc.
 
 ## Roadmap
-2. Adding support for Websockets
-3. Implementing Authentication Packets
-4. Handling Server initiated disconnections
+1. Adding support for Websockets
+2. Implementing Authentication Packets
+3. Handling Server initiated disconnections
+
+## Contributing
+The project is still in its initial stages and needs your help!!. If you face any issue, please do report it. If you have any feature request, also mention it in the issues.

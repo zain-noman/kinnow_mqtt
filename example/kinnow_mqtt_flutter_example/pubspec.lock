@@ -102,9 +102,10 @@ packages:
   kinnow_mqtt:
     dependency: "direct main"
     description:
-      path: "../.."
-      relative: true
-    source: path
+      name: kinnow_mqtt
+      sha256: ae57823e21622b70b183be4e7377cb1181722200406d5ca7b3adbfb25bd6e72e
+      url: "https://pub.dev"
+    source: hosted
     version: "0.9.1"
   leak_tracker:
     dependency: transitive

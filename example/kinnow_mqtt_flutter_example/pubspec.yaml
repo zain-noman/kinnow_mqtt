@@ -35,8 +35,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  kinnow_mqtt:
-    path: ^0.9.1
+  kinnow_mqtt: ^0.9.1
   hex: ^0.2.0
 
 dev_dependencies:
