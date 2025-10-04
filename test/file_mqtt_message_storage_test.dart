@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
-import 'package:kinnow_mqtt/src/file_mqtt_message_storage.dart';
 import 'package:test/test.dart';
 
 void main() {

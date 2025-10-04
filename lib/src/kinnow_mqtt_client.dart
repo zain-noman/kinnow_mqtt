@@ -14,7 +14,7 @@ import 'packets/publish_packet.dart';
 import 'packets/suback_packet.dart';
 import 'packets/subscribe_packet.dart';
 import 'resettable_periodic_timer.dart';
-import 'mqtt_network_connections.dart';
+import 'mqtt_network_connection_base.dart';
 import 'mqtt_events.dart';
 import 'packets/connect_packet.dart';
 

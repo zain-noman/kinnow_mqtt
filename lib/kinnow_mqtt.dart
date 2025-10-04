@@ -1,6 +1,3 @@
-/// The main mqtt library
-library kinnow_mqtt;
-
 export 'src/packets/conn_ack_packet.dart';
 export 'src/packets/connect_packet.dart';
 export 'src/packets/disconnect_packet.dart';
@@ -17,6 +14,10 @@ export 'src/byte_utils.dart' show StringOrBytes;
 export 'src/kinnow_mqtt_client.dart' show KinnowMqttClient;
 export 'src/mqtt_events.dart';
 export 'src/mqtt_message_storage.dart';
-export 'src/mqtt_network_connections.dart';
+export 'src/mqtt_network_connection_base.dart';
+
+export 'src/mqtt_network_connections.dart' // Stub implementation
+  if (dart.library.js_interop) 'src/mqtt_network_connections_web.dart'; // package:web implementation
+
 export 'src/mqtt_qos.dart';
 export 'src/file_mqtt_message_storage.dart';

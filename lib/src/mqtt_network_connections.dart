@@ -1,17 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-
-/// The base class for network connections that can be used for mqtt
-abstract class MqttNetworkConnection {
-  /// establish a connection
-  Future<Stream<int>?> connect();
-
-  /// send data on the connection. Returns success or failure
-  Future<bool> transmit(Iterable<int> bytes);
-
-  /// close an established connection
-  Future<void> close();
-}
+import 'mqtt_network_connection_base.dart';
 
 /// Mqtt Connection that uses simple TCP sockets without encryption
 ///
@@ -129,5 +118,58 @@ class SslTcpMqttNetworkConnection implements MqttNetworkConnection {
   Future<void> close() async {
     _currentSocket?.destroy();
     _currentSocket = null;
+  }
+}
+
+/// Mqtt Connection that uses WebSockets
+///
+/// This implementation is for use in non-browser applications only
+/// To use secure websockets simply use a url that has "wss://broker-address"
+/// instead of "ws://broker-address"
+class WebSocketMqttNetworkConnection implements MqttNetworkConnection{
+
+  final String url;
+  WebSocket? _currentSocket;
+
+  WebSocketMqttNetworkConnection({required this.url});
+
+  @override
+  Future<Stream<int>?> connect() async{
+    try {
+      final socket = await WebSocket.connect(url);
+      // socket.setOption(SocketOption.tcpNoDelay,true);
+      _currentSocket = socket;
+      return socket.transform(StreamTransformer.fromHandlers(
+        handleData: (data, sink) {
+          for (final d in data) {
+            sink.add(d);
+          }
+        },
+        handleDone: (sink) {
+          sink.close();
+          _currentSocket = null;
+        },
+        handleError: (error, stackTrace, sink) {
+          if (error is SocketException) {
+            sink.close();
+          }
+        },
+      ));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    _currentSocket?.close();
+    _currentSocket = null;
+  }
+
+  @override
+  Future<bool> transmit(Iterable<int> bytes) async {
+    if (_currentSocket == null) return false;
+    _currentSocket?.add(bytes.toList());
+    return true;
   }
 }

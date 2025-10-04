@@ -40,3 +40,10 @@
 * fixed a mistake in the pubspec path of the demo app
 * updated the readme to feature the demo app
 * fixed a mistake in the .desktop file used for the linux snap package
+
+## 0.9.3
+
+* packages upgraded
+* added websocket support
+* added browser support
+* created browser version of flutter example

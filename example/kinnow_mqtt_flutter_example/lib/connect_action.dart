@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
 import 'package:kinnow_mqtt_flutter_desktop_client/logs_provider.dart';
@@ -17,6 +18,7 @@ class ConnectActionMaker extends StatefulWidget {
 
 class _ConnectActionMakerState extends State<ConnectActionMaker>
     with AutomaticKeepAliveClientMixin {
+  bool useWebSockets = false;
   String? host;
   int? port;
   String? clientId;
@@ -46,11 +48,15 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
     _formKey.currentState!.save();
 
     final MqttNetworkConnection networkConnection;
-    if (tlsEnabled) {
-      networkConnection =
-          SslTcpMqttNetworkConnection(() => SecureSocket.connect(host!, port!));
+    if (useWebSockets) {
+        networkConnection = WebSocketMqttNetworkConnection(url: host!);
     } else {
-      networkConnection = TcpMqttNetworkConnection(host!, port!);
+      if (tlsEnabled) {
+        networkConnection = SslTcpMqttNetworkConnection(
+            () => SecureSocket.connect(host!, port!));
+      } else {
+        networkConnection = TcpMqttNetworkConnection(host!, port!);
+      }
     }
 
     final ConnectPacketWillProperties? will;
@@ -106,6 +112,14 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      useWebSockets = true;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     return Form(
@@ -115,7 +129,12 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
           const SizedBox(height: 10),
           InfoButton(infoBuilder: infoWidget),
           StringNullableFormField("host", true, (p0) => host = p0),
-          IntNullableFormField("port", true, (p0) => port = p0!),
+          if (!useWebSockets)
+            IntNullableFormField("port", true, (p0) => port = p0!),
+          if (kIsWeb) const Text("On Browsers, only websockets are supported"),
+          BoolFormField("use websockets?", useWebSockets, (p0) {
+            if (!kIsWeb) setState(() => useWebSockets = p0);
+          }),
           IntNullableFormField(
               "keep alive interval", true, (p0) => keepAliveInterval = p0!),
           StringNullableFormField("client id", false, (p0) => clientId = p0),
@@ -123,8 +142,9 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
           StringNullableFormField("password", false, (p0) => password = p0),
           BoolFormField("clean start", cleanStart,
               (p0) => setState(() => cleanStart = p0)),
-          BoolFormField("use SSL/TLS", tlsEnabled,
-              (p0) => setState(() => tlsEnabled = p0)),
+          if (!useWebSockets)
+            BoolFormField("use SSL/TLS", tlsEnabled,
+                (p0) => setState(() => tlsEnabled = p0)),
           BoolFormField("use last will", useLastWill,
               (p0) => setState(() => useLastWill = p0)),
           if (useLastWill)
