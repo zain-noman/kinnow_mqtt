@@ -123,7 +123,7 @@ class SslTcpMqttNetworkConnection implements MqttNetworkConnection {
 
 /// Mqtt Connection that uses WebSockets
 ///
-/// This implementation is for use in non-browser applications only
+/// implementations exist for both browser and non-browser applications.
 /// To use secure websockets simply use a url that has "wss://broker-address"
 /// instead of "ws://broker-address"
 class WebSocketMqttNetworkConnection implements MqttNetworkConnection{
