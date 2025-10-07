@@ -160,144 +160,161 @@ class ConnAckPacket {
       ParseResult parseRes;
 
       // ignore: unnecessary_cast
-      switch (propertyId as int) {
-        case 0x11:
-          {
-            final parseResTemp = ByteUtils.parseFourByte(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            sessionExpiryInterval = parseRes.data;
-          }
-        case 0x21:
-          {
-            final parseResTemp = ByteUtils.parseTwoByte(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            receiveMaximum = parseRes.data;
-          }
-        case 0x24:
-          {
-            parseRes = ParseResult(
-              data: currentBlock.elementAt(1),
-              bytesConsumed: 1,
-              nextBlockStart: currentBlock.skip(2),
-            );
-            maximumQOS = MqttQos.values[currentBlock.elementAt(1)];
-          }
-        case 0x25:
-          {
-            parseRes = ParseResult(
-              data: currentBlock.elementAt(1),
-              bytesConsumed: 1,
-              nextBlockStart: currentBlock.skip(2),
-            );
-            retainAvailable = currentBlock.elementAt(1) == 1;
-          }
-        case 0x27:
-          {
-            final parseResTemp = ByteUtils.parseFourByte(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            maxPacketSize = parseRes.data;
-          }
-        case 0x12:
-          {
-            final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            assignedClientId = parseRes.data;
-          }
-        case 0x22:
-          {
-            final parseResTemp = ByteUtils.parseTwoByte(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            topicAliasMaximum = parseRes.data;
-          }
-        case 0x1F:
-          {
-            final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            reasonString = parseRes.data;
-          }
-        case 0x26:
-          {
-            final parseResTemp = ByteUtils.parseStringPair(currentBlock);
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            userProperties.addEntries([parseRes.data]);
-          }
-        case 0x28:
-          {
-            parseRes = ParseResult(
-              data: currentBlock.elementAt(1),
-              bytesConsumed: 1,
-              nextBlockStart: currentBlock.skip(2),
-            );
-            wildcardSubscriptionAvailable = currentBlock.elementAt(1) == 1;
-          }
-        case 0x29:
-          {
-            parseRes = ParseResult(
-              data: currentBlock.elementAt(1),
-              bytesConsumed: 1,
-              nextBlockStart: currentBlock.skip(2),
-            );
-            subscriptionIdentifiersAvailable = currentBlock.elementAt(1) == 1;
-          }
-        case 0x2A:
-          {
-            parseRes = ParseResult(
-              data: currentBlock.elementAt(1),
-              bytesConsumed: 1,
-              nextBlockStart: currentBlock.skip(2),
-            );
-            sharedSubscriptionAvailable = currentBlock.elementAt(1) == 1;
-          }
-        case 0x13:
-          {
-            final parseResTemp = ByteUtils.parseTwoByte(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            serverKeepAlive = parseRes.data;
-          }
-        case 0x1A:
-          {
-            final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            reasonString = parseRes.data;
-          }
-        case 0x1c:
-          {
-            final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            serverReference = parseResTemp.data;
-          }
-        case 0x15:
-          {
-            final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            authMethod = parseResTemp.data;
-          }
-        case 0x16:
-          {
-            final parseResTemp =
-                ByteUtils.parseBinaryData(currentBlock.skip(1));
-            if (parseResTemp == null) return null;
-            parseRes = parseResTemp;
-            authData = parseRes.data;
-          }
-        default:
-          {
-            return null;
-          }
-      }
-      bytesDone += 1 + parseRes.bytesConsumed;
-      currentBlock = parseRes.nextBlockStart;
+switch (propertyId as int) {
+  case 0x11:
+    {
+      final parseResTemp = ByteUtils.parseFourByte(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      sessionExpiryInterval = parseRes.data as int?;
+      break;
+    }
+  case 0x21:
+    {
+      final parseResTemp = ByteUtils.parseTwoByte(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      receiveMaximum = parseRes.data as int?;
+      break;
+    }
+  case 0x24:
+    {
+      parseRes = ParseResult(
+        data: currentBlock.elementAt(1),
+        bytesConsumed: 1,
+        nextBlockStart: currentBlock.skip(2),
+      );
+      maximumQOS = MqttQos.values[currentBlock.elementAt(1)];
+      break;
+    }
+  case 0x25:
+    {
+      parseRes = ParseResult(
+        data: currentBlock.elementAt(1),
+        bytesConsumed: 1,
+        nextBlockStart: currentBlock.skip(2),
+      );
+      retainAvailable = currentBlock.elementAt(1) == 1;
+      break;
+    }
+  case 0x27:
+    {
+      final parseResTemp = ByteUtils.parseFourByte(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      maxPacketSize = parseRes.data as int?;
+      break;
+    }
+  case 0x12:
+    {
+      final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      assignedClientId = parseRes.data as String?;
+      break;
+    }
+  case 0x22:
+    {
+      final parseResTemp = ByteUtils.parseTwoByte(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      topicAliasMaximum = parseRes.data as int?;
+      break;
+    }
+  case 0x1F:
+    {
+      final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      reasonString = parseRes.data as String?;
+      break;
+    }
+  case 0x26:
+    {
+      final parseResTemp = ByteUtils.parseStringPair(currentBlock);
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      userProperties.addEntries([parseRes.data]);
+      break;
+    }
+  case 0x28:
+    {
+      parseRes = ParseResult(
+        data: currentBlock.elementAt(1),
+        bytesConsumed: 1,
+        nextBlockStart: currentBlock.skip(2),
+      );
+      wildcardSubscriptionAvailable = currentBlock.elementAt(1) == 1;
+      break;
+    }
+  case 0x29:
+    {
+      parseRes = ParseResult(
+        data: currentBlock.elementAt(1),
+        bytesConsumed: 1,
+        nextBlockStart: currentBlock.skip(2),
+      );
+      subscriptionIdentifiersAvailable = currentBlock.elementAt(1) == 1;
+      break;
+    }
+  case 0x2A:
+    {
+      parseRes = ParseResult(
+        data: currentBlock.elementAt(1),
+        bytesConsumed: 1,
+        nextBlockStart: currentBlock.skip(2),
+      );
+      sharedSubscriptionAvailable = currentBlock.elementAt(1) == 1;
+      break;
+    }
+  case 0x13:
+    {
+      final parseResTemp = ByteUtils.parseTwoByte(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      serverKeepAlive = parseRes.data as int?;
+      break;
+    }
+  case 0x1A:
+    {
+      final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      reasonString = parseRes.data as String?;
+      break;
+    }
+  case 0x1c:
+    {
+      final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      serverReference = parseResTemp.data as String?;
+      break;
+    }
+  case 0x15:
+    {
+      final parseResTemp = ByteUtils.mqttParseUtf8(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      authMethod = parseResTemp.data as String?;
+      break;
+    }
+  case 0x16:
+    {
+      final parseResTemp = ByteUtils.parseBinaryData(currentBlock.skip(1));
+      if (parseResTemp == null) return null;
+      parseRes = parseResTemp;
+      authData = parseRes.data as List<int>?;
+      break;
+    }
+  default:
+    {
+      return null;
+    }
+}
+bytesDone += 1 + (parseRes.bytesConsumed ?? 0);
+currentBlock = parseRes.nextBlockStart;
+
     }
 
     return ConnAckPacket(
