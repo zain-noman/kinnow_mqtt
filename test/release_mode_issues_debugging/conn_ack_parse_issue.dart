@@ -1,6 +1,6 @@
 import 'package:kinnow_mqtt/kinnow_mqtt.dart';
 
-void main(){
+void main() {
   final packetBytes = [
     0x20,
     0x09,

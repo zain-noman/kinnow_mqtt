@@ -126,15 +126,14 @@ class SslTcpMqttNetworkConnection implements MqttNetworkConnection {
 /// implementations exist for both browser and non-browser applications.
 /// To use secure websockets simply use a url that has "wss://broker-address"
 /// instead of "ws://broker-address"
-class WebSocketMqttNetworkConnection implements MqttNetworkConnection{
-
+class WebSocketMqttNetworkConnection implements MqttNetworkConnection {
   final String url;
   WebSocket? _currentSocket;
 
   WebSocketMqttNetworkConnection({required this.url});
 
   @override
-  Future<Stream<int>?> connect() async{
+  Future<Stream<int>?> connect() async {
     try {
       final socket = await WebSocket.connect(url);
       // socket.setOption(SocketOption.tcpNoDelay,true);

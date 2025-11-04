@@ -17,7 +17,7 @@ export 'src/mqtt_message_storage.dart';
 export 'src/mqtt_network_connection_base.dart';
 
 export 'src/mqtt_network_connections.dart' // Stub implementation
-  if (dart.library.js_interop) 'src/mqtt_network_connections_web.dart'; // package:web implementation
+    if (dart.library.js_interop) 'src/mqtt_network_connections_web.dart'; // package:web implementation
 
 export 'src/mqtt_qos.dart';
 export 'src/file_mqtt_message_storage.dart';

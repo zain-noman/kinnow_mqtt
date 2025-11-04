@@ -49,7 +49,7 @@ class _ConnectActionMakerState extends State<ConnectActionMaker>
 
     final MqttNetworkConnection networkConnection;
     if (useWebSockets) {
-        networkConnection = WebSocketMqttNetworkConnection(url: host!);
+      networkConnection = WebSocketMqttNetworkConnection(url: host!);
     } else {
       if (tlsEnabled) {
         networkConnection = SslTcpMqttNetworkConnection(
