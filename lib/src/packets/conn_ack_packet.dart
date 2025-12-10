@@ -313,6 +313,7 @@ class ConnAckPacket {
             return null;
           }
       }
+      //ignore: dead_null_aware_expression
       bytesDone += 1 + (parseRes.bytesConsumed ?? 0);
       currentBlock = parseRes.nextBlockStart;
     }

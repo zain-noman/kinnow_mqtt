@@ -27,7 +27,7 @@ class _LogsProviderBaseState extends State<LogsProviderBase> {
     });
   }
 
-  void updateLogFormat(showLogsInHex) {
+  void updateLogFormat(bool showLogsInHex) {
     _showLogsInHex = showLogsInHex;
   }
 
