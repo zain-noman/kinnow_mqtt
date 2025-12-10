@@ -534,10 +534,12 @@ class KinnowMqttClient {
               orElse: () => null)
           .timeout(const Duration(seconds: 5), onTimeout: () => null);
 
-      if (storageId != null) {
-        await storage?.remove(storageId);
+      if (pubAck != null) {
+        if (storageId != null) {
+          await storage?.remove(storageId);
+        }
+        return pubAck;
       }
-      if (pubAck != null) return pubAck;
 
       isDuplicate = true;
     }
