@@ -88,6 +88,15 @@ class KinnowMqttClient {
   /// are ot provided out of the box to reduce dependencies
   final MqttMessageStorage? storage;
 
+  /// The time duration during which a reply is expected to be received from the broker
+  ///
+  /// This is used for multiple types of responses, for eg during connection, during
+  /// QoS 1 & 2 messages, as well as subscribe and unsubscribe messages. Note that this
+  /// timeout is different from the timeout arguments of those functions. [responseTimeout]
+  /// applies after a request has been sent whereas the timeout of, for instance, [publishQos1]
+  /// is the timeout for waiting for a network connection.
+  Duration responseTimeout;
+
   /// A unique identifier of the client.
   ///
   /// Please ensure using unique clientIds on different devices. If the same clientId
@@ -136,6 +145,7 @@ class KinnowMqttClient {
     this.networkConnection, {
     String? initClientId,
     this.reconnectDelay = const Duration(seconds: 10),
+    this.responseTimeout = const Duration(seconds: 2),
     this.storage,
   }) {
     clientId =
@@ -186,7 +196,7 @@ class KinnowMqttClient {
     bool timedOut = false;
     final (connackFixedHdr, socketEnd, bytesTaken) =
         await MqttFixedHeader.fromStreamQueue(streamQ).timeout(
-      const Duration(seconds: 3),
+      responseTimeout,
       onTimeout: () {
         timedOut = true;
         return (null, false, null);
@@ -218,7 +228,7 @@ class KinnowMqttClient {
 
     final connackBytes = await Future.any([
       streamQ.take(remLen),
-      Future.delayed(const Duration(seconds: 3), () => null)
+      Future.delayed(responseTimeout, () => null)
     ]);
     if (connackBytes == null) {
       _eventController.add(ConnackTimedOut());
@@ -308,7 +318,7 @@ class KinnowMqttClient {
     _pingRespReceived = false;
     _eventController.add(PingReqSent());
     Timer(
-      const Duration(seconds: 3),
+      responseTimeout,
       () {
         if (_pingRespReceived) return;
         _eventController.add(PingRespNotReceived());
@@ -461,28 +471,35 @@ class KinnowMqttClient {
   /// network connection and then send the message. QoS 0 messages are not acknowledged
   /// by the server so these is a slight chance that QoS 0 messages are not received.
   /// returns a future that completes with 'true' if the message was transmitted and
-  /// completes with false if the client shuts down before the message could be sent
-  Future<bool> publishQos0(TxPublishPacket pubPkt) {
-    return _publishQos0Internal(pubPkt);
+  /// completes with false if the message was not sent during the [timeout] or if client
+  /// shut down before the message could be sent
+  Future<bool> publishQos0(TxPublishPacket pubPkt, {Duration? timeout}) {
+    return _publishQos0Internal(pubPkt, timeout: timeout);
   }
 
   /// the argument [storageId] can be used to avoid duplicate storage for pre
   /// stored messages
   Future<bool> _publishQos0Internal(TxPublishPacket pubPkt,
-      {int? storageId}) async {
+      {int? storageId, Duration? timeout}) async {
     storageId ??= await storage?.storeMessage(MqttQos.atMostOnce, pubPkt);
-    final token = _operationQueue.generateToken();
-    return _operationQueue.addToQueueAndExecute(
-      token,
-      (state) async {
-        final txPkt = InternalTxPublishPacket(
-            null, MqttQos.atMostOnce, pubPkt, _activeConnectionState!);
-        await networkConnection.transmit(txPkt.bytes);
-        if (storageId != null) {
-          await storage?.remove(storageId);
-        }
-      },
-    ).then((value) => value == OperationResult.operationExecuted);
+    final token = MqttOperationToken.generateToken(timeout: timeout);
+    while (true) {
+      final res = await _operationQueue.addToQueueAndExecute(
+        token,
+        (state) async {
+          final txPkt = InternalTxPublishPacket(
+              null, MqttQos.atMostOnce, pubPkt, _activeConnectionState!);
+          await networkConnection.transmit(txPkt.bytes);
+          if (storageId != null) {
+            await storage?.remove(storageId);
+          }
+        },
+      );
+      if (res == OperationResult.operationExecuted) return true;
+      if (res == OperationResult.operationCanceledByPause) continue;
+      // in case of timeout or shutdown return false
+      return false;
+    }
   }
 
   int _packetIdGenerator = 0;
@@ -498,19 +515,21 @@ class KinnowMqttClient {
   /// by the server so QoS 1 messages are received at least once but may be received
   /// more than once. Returns a future that completes with the [PubackPacket] sent
   /// by the server if the message was transmitted and completes with null if the
-  /// client shuts down before the message could be sent
-  Future<PubackPacket?> publishQos1(TxPublishPacket pubPkt) {
-    return _publishQos1Internal(pubPkt);
+  /// message could not be sent within the timeout duration or the client shuts down
+  /// before the message could be sent
+  Future<PubackPacket?> publishQos1(TxPublishPacket pubPkt,
+      {Duration? timeout}) {
+    return _publishQos1Internal(pubPkt, timeout: timeout);
   }
 
   /// the argument [storageId] can be used to avoid duplicate storage for pre
   /// stored messages
   Future<PubackPacket?> _publishQos1Internal(TxPublishPacket pubPkt,
-      {int? storageId}) async {
+      {int? storageId, Duration? timeout}) async {
     storageId ??= await storage?.storeMessage(MqttQos.atMostOnce, pubPkt);
 
     bool isDuplicate = false;
-    final token = _operationQueue.generateToken();
+    final token = MqttOperationToken.generateToken(timeout: timeout);
     final packetId = _generatePacketId();
     while (true) {
       final sent = await _operationQueue.addToQueueAndExecute(
@@ -523,7 +542,10 @@ class KinnowMqttClient {
         },
       );
 
-      if (sent == OperationResult.operationCanceledByShutdown) return null;
+      if (sent == OperationResult.operationCanceledByShutdown ||
+          sent == OperationResult.operationTimedOut) {
+        return null;
+      }
 
       if (sent == OperationResult.operationCanceledByPause) continue;
       if (_activeConnectionState == null) continue;
@@ -532,7 +554,15 @@ class KinnowMqttClient {
           .cast<PubackPacket?>()
           .firstWhere((element) => element?.packetId == packetId,
               orElse: () => null)
-          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+          .timeout(responseTimeout, onTimeout: () => null);
+      // from the specification:
+      // When a Client reconnects with Clean Start set to 0 and a session is present,
+      // both the Client and Server MUST resend any unacknowledged PUBLISH packets (where QoS > 0)
+      // and PUBREL packets using their original Packet Identifiers. This is the only circumstance
+      // where a Client or Server is REQUIRED to resend messages. Clients and Servers MUST NOT resend
+      // messages at any other time [MQTT-4.4.0-1].
+      // The responseTimeout thing im doing isn't according to spec. But do i then just wait infinitely
+      // for a response?
 
       if (pubAck != null) {
         if (storageId != null) {
@@ -550,19 +580,22 @@ class KinnowMqttClient {
   /// QoS 2 messages are received exactly once but have
   /// more overhead. returns a future that completes with the [PubrecPacket] and
   /// the [PubcompPacket] sent by the server if the message was transmitted and
-  /// completes with null if the client shuts down before the message could be sent
-  Future<(PubrecPacket, PubcompPacket)?> publishQos2(TxPublishPacket pubPkt) {
-    return _publishQos2Internal(pubPkt);
+  /// completes with null if the message was not sent within the timeout duration or
+  /// client shut down before the message could be sent
+  Future<(PubrecPacket, PubcompPacket)?> publishQos2(TxPublishPacket pubPkt,
+      {Duration? timeout}) {
+    return _publishQos2Internal(pubPkt, timeout: timeout);
   }
 
   /// the argument [storageId] can be used to avoid duplicate storage for pre
   /// stored messages
   Future<(PubrecPacket, PubcompPacket)?> _publishQos2Internal(
       TxPublishPacket pubPkt,
-      {int? storageId}) async {
+      {int? storageId,
+      Duration? timeout}) async {
     storageId ??= await storage?.storeMessage(MqttQos.atMostOnce, pubPkt);
     bool isDuplicate = false;
-    final token = _operationQueue.generateToken();
+    final token = MqttOperationToken.generateToken(timeout: timeout);
     final packetId = _generatePacketId();
 
     PubrecPacket? pubRec;
@@ -577,7 +610,10 @@ class KinnowMqttClient {
         },
       );
 
-      if (sent == OperationResult.operationCanceledByShutdown) return null;
+      if (sent == OperationResult.operationCanceledByShutdown ||
+          sent == OperationResult.operationTimedOut) {
+        return null;
+      }
 
       if (sent == OperationResult.operationCanceledByPause) continue;
       if (_activeConnectionState == null) continue;
@@ -586,12 +622,16 @@ class KinnowMqttClient {
           .cast<PubrecPacket?>()
           .firstWhere((element) => element?.packetId == packetId,
               orElse: () => null)
-          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+          .timeout(responseTimeout, onTimeout: () => null);
 
       if (pubRec != null) break;
 
       isDuplicate = true;
     }
+
+    // remove timeout, we've sent the packet and received an PUBREC,
+    // now we have to release the message id regardless of timeout
+    token.disarmTimeout();
 
     PubcompPacket? pubComp;
     while (true) {
@@ -612,7 +652,7 @@ class KinnowMqttClient {
           .cast<PubcompPacket?>()
           .firstWhere((element) => element?.packetId == packetId,
               orElse: () => null)
-          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+          .timeout(responseTimeout, onTimeout: () => null);
 
       if (pubComp != null) break;
 
@@ -629,8 +669,9 @@ class KinnowMqttClient {
   /// Returns a Future that completes with a [SubackPacket] if the subscription
   /// is successful and null if the client shuts down before subscription completes.
   /// After subscription messages can be received on [receivedMessagesStream]
-  Future<SubackPacket?> subscribe(SubscribePacket subPkt) async {
-    final token = _operationQueue.generateToken();
+  Future<SubackPacket?> subscribe(SubscribePacket subPkt,
+      {Duration? timeout}) async {
+    final token = MqttOperationToken.generateToken(timeout: timeout);
     final packetId = _generatePacketId();
     final pktBytes = InternalSubscribePacket(packetId, subPkt).toBytes();
     while (true) {
@@ -641,7 +682,10 @@ class KinnowMqttClient {
         },
       );
 
-      if (sent == OperationResult.operationCanceledByShutdown) return null;
+      if (sent == OperationResult.operationCanceledByShutdown ||
+          sent == OperationResult.operationTimedOut) {
+        return null;
+      }
 
       if (sent == OperationResult.operationCanceledByPause) continue;
       if (_activeConnectionState == null) continue;
@@ -650,7 +694,7 @@ class KinnowMqttClient {
           .cast<SubackPacket?>()
           .firstWhere((element) => element?.packetId == packetId,
               orElse: () => null)
-          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+          .timeout(responseTimeout, onTimeout: () => null);
 
       if (subAck != null) return subAck;
     }
@@ -661,7 +705,7 @@ class KinnowMqttClient {
   /// Returns a Future that completes with a [UnsubackPacket] if the subscription
   /// is successful and null if the client shuts down before the unsubscribe completes
   Future<UnsubackPacket?> unsubscribe(UnsubscribePacket unSubPkt) async {
-    final token = _operationQueue.generateToken();
+    final token = MqttOperationToken.generateToken();
     final packetId = _generatePacketId();
     final pktBytes = InternalUnsubscribePacket(packetId, unSubPkt).toBytes();
     while (true) {
@@ -681,7 +725,7 @@ class KinnowMqttClient {
           .cast<UnsubackPacket?>()
           .firstWhere((element) => element?.packetId == packetId,
               orElse: () => null)
-          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+          .timeout(responseTimeout, onTimeout: () => null);
 
       if (unsubAck != null) return unsubAck;
     }
@@ -721,23 +765,23 @@ class KinnowMqttClient {
               MalformedPacket(null, message: "qos1 received without packetId"));
           return;
         }
-        final token = _operationQueue.generateToken();
+        final token = MqttOperationToken.generateToken();
         unawaited(_operationQueue.addToQueueAndExecute(
           token,
           (state) async {
             networkConnection.transmit(
                 PubackPacket(rxPub.packetId!, null, null, const {}).toBytes());
           },
-        ));
+        )); // not gonna re enqueue if network drops (pause)
         _rxPacketController.add(rxPub);
       case MqttQos.exactlyOnce:
         if (rxPub.packetId == null) {
           _eventController.add(
-              MalformedPacket(null, message: "qos1 received without packetId"));
+              MalformedPacket(null, message: "qos2 received without packetId"));
           return;
         }
         _qos2MessagesAwaitingRelease[rxPub.packetId!] = rxPub;
-        final token = _operationQueue.generateToken();
+        final token = MqttOperationToken.generateToken();
         unawaited(_operationQueue.addToQueueAndExecute(
           token,
           (state) async {
@@ -751,7 +795,7 @@ class KinnowMqttClient {
   void _handlePubrelPacket(PubrelPacket pubRel) {
     final correspondingMessage = _qos2MessagesAwaitingRelease[pubRel.packetId];
     if (correspondingMessage != null) {
-      final token = _operationQueue.generateToken();
+      final token = MqttOperationToken.generateToken();
       unawaited(_operationQueue.addToQueueAndExecute(
         token,
         (state) async {
@@ -762,7 +806,7 @@ class KinnowMqttClient {
       _qos2MessagesAwaitingRelease.remove(pubRel.packetId);
       _rxPacketController.add(correspondingMessage);
     } else {
-      final token = _operationQueue.generateToken();
+      final token = MqttOperationToken.generateToken();
       unawaited(_operationQueue.addToQueueAndExecute(
         token,
         (state) async {

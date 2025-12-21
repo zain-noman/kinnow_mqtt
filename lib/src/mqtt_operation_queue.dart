@@ -4,13 +4,51 @@ typedef MqttOperation<T> = Future<void> Function(T state);
 
 enum OperationResult {
   operationExecuted,
+  // on pause the operation is removed from the queue, this is helpful in scenarios where
+  // you want to modify the operation or some data in it before re-queueing
   operationCanceledByPause,
-  operationCanceledByShutdown
+  operationCanceledByShutdown,
+  operationTimedOut
+}
+
+class MqttOperationToken {
+  final int tokenId;
+  late Timer? _timeoutTimer;
+  void Function()? _onTimeout;
+
+  void _timeoutCb() {
+    if (_onTimeout != null) {
+      _onTimeout!();
+    }
+  }
+
+  MqttOperationToken(this.tokenId, Duration? timeoutDuration) {
+    _timeoutTimer =
+        timeoutDuration == null ? null : Timer(timeoutDuration, _timeoutCb);
+  }
+
+  static int _tokenIdGenerator = 1;
+
+  factory MqttOperationToken.generateToken({Duration? timeout}) {
+    final id = _tokenIdGenerator;
+    _tokenIdGenerator++;
+    return MqttOperationToken(id, timeout);
+  }
+
+  bool isTimedOut() => _timeoutTimer == null ? false : !(_timeoutTimer!.isActive);
+
+  void setTimeoutCallback(void Function()? cb) => _onTimeout = cb;
+
+  void disarmTimeout() {
+    _timeoutTimer?.cancel();
+    _onTimeout = null;
+    _timeoutTimer = null;
+  }
 }
 
 class MqttOperationData<T> {
   final MqttOperation<T> operation;
-  final int queueToken;
+  final MqttOperationToken queueToken;
   final Completer<OperationResult> completer;
 
   MqttOperationData(this.operation, this.queueToken, this.completer);
@@ -21,14 +59,6 @@ class MqttOperationQueue<T> {
   final _queuedOperations = <MqttOperationData<T>>[];
   final _operationAddedNotifier = StreamController<Null>();
   T? _sessionState;
-
-  int _nextToxenToGive = 0;
-
-  int generateToken() {
-    final retVal = _nextToxenToGive;
-    _nextToxenToGive++;
-    return retVal;
-  }
 
   MqttOperationQueue() {
     _internalLoop();
@@ -84,6 +114,7 @@ class MqttOperationQueue<T> {
         //insertions should ensure _queuedOperations is sorted by queueToken
         final op = _queuedOperations.first;
 
+        op.queueToken.disarmTimeout();
         final opFut = op.operation(_sessionState as T);
         bool exit = false;
         final opCompleted = await Future.any([
@@ -112,17 +143,27 @@ class MqttOperationQueue<T> {
   }
 
   Future<OperationResult> addToQueueAndExecute(
-      int queueToken, MqttOperation<T> operation) {
+      MqttOperationToken queueToken, MqttOperation<T> operation) {
     if (_operationAddedNotifier.isClosed) {
       return Future.value(OperationResult.operationCanceledByShutdown);
     }
+
+    if (queueToken.isTimedOut()) {
+      return Future.value(OperationResult.operationTimedOut);
+    }
+
     final completer = Completer<OperationResult>();
     final opData = MqttOperationData(operation, queueToken, completer);
     var insertIdx = _queuedOperations
-        .indexWhere((element) => element.queueToken > queueToken);
+        .indexWhere((element) => element.queueToken.tokenId > queueToken.tokenId);
     if (insertIdx == -1) insertIdx = _queuedOperations.length;
     _queuedOperations.insert(insertIdx, opData);
     _operationAddedNotifier.add(null);
+    queueToken.setTimeoutCallback(() {
+      _queuedOperations.remove(opData);
+      completer.complete(OperationResult.operationTimedOut);
+    },);
+
     return completer.future;
   }
 
