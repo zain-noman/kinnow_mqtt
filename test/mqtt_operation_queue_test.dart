@@ -141,7 +141,7 @@ void main() {
               MqttOperationToken.generateToken(timeout: Duration(seconds: 4));
           bool op2Ran = false;
           OperationResult? res2;
-          expect(token2.isTimedOut(),false);
+          expect(token2.isTimedOut(), false);
           q.addToQueueAndExecute(
             token2,
             (state) async {

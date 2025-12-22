@@ -226,10 +226,8 @@ class KinnowMqttClient {
     }
     final remLen = connackFixedHdr.remainingLength;
 
-    final connackBytes = await Future.any([
-      streamQ.take(remLen),
-      Future.delayed(responseTimeout, () => null)
-    ]);
+    final connackBytes = await Future.any(
+        [streamQ.take(remLen), Future.delayed(responseTimeout, () => null)]);
     if (connackBytes == null) {
       _eventController.add(ConnackTimedOut());
       return (false, null);

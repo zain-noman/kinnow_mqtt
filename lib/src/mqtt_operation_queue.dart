@@ -35,7 +35,8 @@ class MqttOperationToken {
     return MqttOperationToken(id, timeout);
   }
 
-  bool isTimedOut() => _timeoutTimer == null ? false : !(_timeoutTimer!.isActive);
+  bool isTimedOut() =>
+      _timeoutTimer == null ? false : !(_timeoutTimer!.isActive);
 
   void setTimeoutCallback(void Function()? cb) => _onTimeout = cb;
 
@@ -154,15 +155,17 @@ class MqttOperationQueue<T> {
 
     final completer = Completer<OperationResult>();
     final opData = MqttOperationData(operation, queueToken, completer);
-    var insertIdx = _queuedOperations
-        .indexWhere((element) => element.queueToken.tokenId > queueToken.tokenId);
+    var insertIdx = _queuedOperations.indexWhere(
+        (element) => element.queueToken.tokenId > queueToken.tokenId);
     if (insertIdx == -1) insertIdx = _queuedOperations.length;
     _queuedOperations.insert(insertIdx, opData);
     _operationAddedNotifier.add(null);
-    queueToken.setTimeoutCallback(() {
-      _queuedOperations.remove(opData);
-      completer.complete(OperationResult.operationTimedOut);
-    },);
+    queueToken.setTimeoutCallback(
+      () {
+        _queuedOperations.remove(opData);
+        completer.complete(OperationResult.operationTimedOut);
+      },
+    );
 
     return completer.future;
   }

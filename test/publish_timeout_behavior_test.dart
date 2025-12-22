@@ -159,7 +159,7 @@ void main() {
           }
           await Future.delayed(const Duration(seconds: 2));
 
-          expect(qos0PublishSuccessStatus,true);
+          expect(qos0PublishSuccessStatus, true);
           expect(elapsedTimePubSuccess, lessThan(6000));
         },
       );
