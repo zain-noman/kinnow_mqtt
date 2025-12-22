@@ -1,6 +1,6 @@
 name: kinnow_mqtt
 description: A Mqtt 5 client designed with lifecycle management and IoT in mind.
-version: 0.9.3
+version: 0.9.4
 repository: https://github.com/zain-noman/kinnow_mqtt
 
 environment:
@@ -10,7 +10,7 @@ environment:
 dependencies:
   path: ^1.9.0
   async: ^2.11.0
-  protobuf: ^5.0.0
+  protobuf: ^6.0.0
   mutex: ^3.1.0
   crclib: ^3.0.0
   web: ^1.1.1

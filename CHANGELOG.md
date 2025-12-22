@@ -47,3 +47,11 @@
 * added websocket support
 * added browser support
 * created browser version of flutter example
+
+## 0.9.4
+
+* Merge [pull request #2 from voobl/patch-1](https://github.com/zain-noman/kinnow_mqtt/pull/2)
+* Formatting
+* Bugfix in storage of QoS1 Messages
+* Added timeout functionality
+* upgraded protobuf version
