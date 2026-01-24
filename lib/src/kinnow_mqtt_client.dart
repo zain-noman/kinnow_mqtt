@@ -310,17 +310,26 @@ class KinnowMqttClient {
   static const _malformedPacketDisconnectPacket =
       DisconnectPacket(DisconnectReasonCode.malformedPacket);
 
-  void _sendPingReq() {
-    networkConnection
+  void _sendPingReq() async {
+    bool sent = await networkConnection
         .transmit(MqttFixedHeader(MqttPacketType.pingreq, 0, 0).toBytes());
+    if (!sent) return;
     _pingRespReceived = false;
-    _eventController.add(PingReqSent());
+    if (!_eventController.isClosed) {
+      _eventController.add(PingReqSent());
+    }
+
     Timer(
       responseTimeout,
       () {
+        if (_eventController.isClosed) return;
         if (_pingRespReceived) return;
+
         _eventController.add(PingRespNotReceived());
-        _activeConnectionState?.pingRespTimeoutCompleter.complete(null);
+        if (_activeConnectionState != null &&
+            !_activeConnectionState!.pingRespTimeoutCompleter.isCompleted) {
+          _activeConnectionState?.pingRespTimeoutCompleter.complete(null);
+        }
       },
     );
   }
